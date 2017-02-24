@@ -36,6 +36,7 @@ enum ExpressionStatus {
     case inExpressionLeftOperand
     case inExpressionOperator
     case inExpressionRightOperand
+    case inCondition
 }
 
 
@@ -52,7 +53,19 @@ extension String {
         var expLeftOperand = ""
         var expRightOperand = ""
         var expOperator = ""
+        var condition = ""
+
         var validOperator:ExpressionOperator!
+
+        func clear() {
+            status = .clear
+            innerExpression = ""
+            innerBracketCounter = 0
+            expLeftOperand = ""
+            expRightOperand = ""
+            expOperator = ""
+            condition = ""
+        }
         
         func openBracket() {
             status = .inBracketExpression
@@ -61,7 +74,7 @@ extension String {
         }
         
         func closeBracket() {
-            status = .clear
+            status = .inCondition
             innerExpression = ""
             innerBracketCounter = 0
         }
@@ -84,7 +97,13 @@ extension String {
         }
         
         func closeExpression() {
-            status = .clear
+            status = .inCondition
+            innerExpression = ""
+            innerBracketCounter = 0
+            expLeftOperand = ""
+            expRightOperand = ""
+            expOperator = ""
+            condition = ""
         }
         
         func getValidOperator(_ op: String) throws -> ExpressionOperator {
@@ -213,7 +232,7 @@ extension String {
         
         
         func evaluateOperand(operand: String) throws -> Any {
-            guard operand.characters.count > 0 else {
+            guard !operand.isEmpty else {
                 throw ExpressionError.invalidOperand
             }
             
@@ -276,7 +295,7 @@ extension String {
             return equal
         }
         
-        
+        clear()
         for index in self.characters.indices {
             let lastIndex = (index == self.characters.indices.index(before: self.characters.indices.endIndex) ? true : false)
             let value = String(self[index])
@@ -324,7 +343,7 @@ extension String {
                 
             case .inExpressionOperator:
                 if value == " " {
-                    if expOperator.characters.count > 0 {
+                    if !expOperator.isEmpty {
                         validOperator = try getValidOperator(expOperator)
                         getRightOperand()
                     }
@@ -342,10 +361,9 @@ extension String {
                         expRightOperand.append(value)
                     }
                     
-                    if expRightOperand.characters.count > 0 {
-                        closeExpression()
-                        
+                    if !expRightOperand.isEmpty {
                         previousExpression = try evaluateExpression(left: expLeftOperand, op: validOperator, right: expRightOperand)
+                        closeExpression()
                     }
                     else {
                         //nop
@@ -354,11 +372,34 @@ extension String {
                 else {
                     expRightOperand.append(value)
                 }
-            }
             
+            case .inCondition:
+                condition
+                if value == " "  || lastIndex {
+                    if value != " " && lastIndex {
+                        condition.append(value)
+                    }
+                    
+                    if !condition.isEmpty {
+                        
+                        //TODO: EVALUATE IF && OR ||
+
+                        //TODO: EVALUATE if previousExpression == false && condition == '&&' then return false
+
+                        
+                        clear()
+                    }
+                    else {
+                        //nop
+                    }
+                }
+                else {
+                    condition.append(value)
+                }
+            }
         }
         
-        if status != .clear {
+        if status != .inCondition || !condition.isEmpty {
             if status == .inBracketExpression {
                 throw ExpressionError.unclosedBracket
             }
@@ -371,7 +412,7 @@ extension String {
 }
 
 
-try! "  \"2\"   ==  '2s'  ".checkExpression()
+try! "  \"2\"   ==  '2'  ".checkExpression()
 try! " 1  ==  1 ".checkExpression()
 try! " 1.2  ==  1.2 ".checkExpression()
 try! " var1  ==  1 ".checkExpression(withVariables: ["var1" : 1])
@@ -382,12 +423,12 @@ try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1, "var2" : 1])
 try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
 try! " (var1  ==  var2) ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
 
+try! "var1 == 1 && var2 == 2".checkExpression(withVariables: ["var1" : 0, "var2" : 2])
 
-//"(var1 == 1 && var2 == 2) || var2 == var3 || (var1 == var4 && (var4 == 1 && var2 == \"2\"))"
+//try! "(var1 == 1 && var2 == 2) || var2 == var3 || (var1 == var4 && (var4 == 1 && var2 == \"2\"))".checkExpression(withVariables: ["var1" : 1, "var2" : 2, "var3" : 2, "var4" : 1])
 
 
 
-//TODO: ADD &&, ||
 //TODO: ADD FUNCTION: upper, lower, substr, regex ...
 //TODO: ADD ARITMETIC OPERATION +, -, *, /, %
 //TODO: ADD BRACKET ON OPERAND
