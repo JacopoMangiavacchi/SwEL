@@ -43,7 +43,7 @@ extension String {
     func checkExpression(withVariables variables: [String : Any]? = nil) throws -> Bool {
         print("IN: \(self)")
         
-        var resultExpression = ""
+        var previousExpression = true
         
         var status = ExpressionStatus.clear
         
@@ -305,7 +305,8 @@ extension String {
                     }
                     
                     if innerBracketCounter == 0 {
-                        resultExpression.append(try innerExpression.checkExpression(withVariables: variables) ? "1" : "0")
+                        previousExpression = try innerExpression.checkExpression(withVariables: variables)
+                        
                         closeBracket()
                     }
                     else {
@@ -344,7 +345,7 @@ extension String {
                     if expRightOperand.characters.count > 0 {
                         closeExpression()
                         
-                        resultExpression.append(try evaluateExpression(left: expLeftOperand, op: validOperator, right: expRightOperand) ? "1" : "0")
+                        previousExpression = try evaluateExpression(left: expLeftOperand, op: validOperator, right: expRightOperand)
                     }
                     else {
                         //nop
@@ -365,16 +366,12 @@ extension String {
             throw ExpressionError.invalidSyntax
         }
         
-        print("OUT: \(resultExpression)")
-        
-        //TODO: Evaluate resultExpression and return true or false
-        
-        return false
+        return previousExpression
     }
 }
 
 
-try! "  \"2\"   ==  '2'  ".checkExpression()
+try! "  \"2\"   ==  '2s'  ".checkExpression()
 try! " 1  ==  1 ".checkExpression()
 try! " 1.2  ==  1.2 ".checkExpression()
 try! " var1  ==  1 ".checkExpression(withVariables: ["var1" : 1])
@@ -383,8 +380,18 @@ try! " var1  ==  'test' ".checkExpression(withVariables: ["var1" : "test"])
 try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : "test", "var2" : "test"])
 try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1, "var2" : 1])
 try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
+try! " (var1  ==  var2) ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
 
 
 //"(var1 == 1 && var2 == 2) || var2 == var3 || (var1 == var4 && (var4 == 1 && var2 == \"2\"))"
+
+
+
+//TODO: ADD &&, ||
+//TODO: ADD FUNCTION: upper, lower, substr, regex ...
+//TODO: ADD ARITMETIC OPERATION +, -, *, /, %
+//TODO: ADD BRACKET ON OPERAND
+
+
 
 
