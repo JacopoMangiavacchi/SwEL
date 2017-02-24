@@ -6,7 +6,7 @@ enum ExpressionError : Error {
     case invalidSyntax
     case unclosedBracket
     case invalidOperator
-    case invalidLeftOperand
+    case invalidOperand
     case differentOperandTypes
     case unsupportedOperandType
 }
@@ -40,7 +40,7 @@ enum ExpressionStatus {
 
 
 extension String {
-    func checkExpressionWithVariables(_ variables: [String : Any]) throws -> Bool {
+    func checkExpression(withVariables variables: [String : Any]? = nil) throws -> Bool {
         print("IN: \(self)")
         
         var resultExpression = ""
@@ -212,21 +212,47 @@ extension String {
         }
         
         
-        func evaluateExpression(left: String, op: ExpressionOperator, right: String) throws -> Bool {
-            guard let leftValue = variables[left] else {
-                throw ExpressionError.invalidLeftOperand
+        func evaluateOperand(operand: String) throws -> Any {
+            guard operand.characters.count > 0 else {
+                throw ExpressionError.invalidOperand
             }
             
-            //TODO: Check rules for right format
-            // - begin with Number it meens that it's a Int or Double value
-            // - begin with " or ' it meens that it's a String value
-            // - else is a key for variables as left (if not found exception invalidRightOperand
+            if let intOperand = Int(operand) {
+                return intOperand
+            }
+            else if let doubleOperand = Double(operand) {
+                return doubleOperand
+            }
+            else {
+                if operand.hasPrefix("'") {
+                    if !operand.hasSuffix("'") {
+                        throw ExpressionError.invalidOperand
+                    }
+                    
+                    return operand.replacingOccurrences(of: "'", with: "")
+                }
+                else if operand.hasPrefix("\"") {
+                    if !operand.hasSuffix("\"") {
+                        throw ExpressionError.invalidOperand
+                    }
+
+                    return operand.replacingOccurrences(of: "\"", with: "")
+                }
+                else {
+                    if let variable = variables?[operand] {
+                        return variable
+                    }
+                    throw ExpressionError.invalidOperand
+                }
+            }
+        }
+
+        
+        func evaluateExpression(left: String, op: ExpressionOperator, right: String) throws -> Bool {
+            let leftValue = try evaluateOperand(operand: left)
+            let rightValue = try evaluateOperand(operand: right)
             
-            
-            
-            let rightValue:Any = variables[right] ?? right.replacingOccurrences(of: "\"", with: "")
-            
-            if type(of: leftValue) != type(of: rightValue) {
+            guard type(of: leftValue) == type(of: rightValue) else {
                 throw ExpressionError.differentOperandTypes
             }
 
@@ -279,7 +305,7 @@ extension String {
                     }
                     
                     if innerBracketCounter == 0 {
-                        resultExpression.append(try innerExpression.checkExpressionWithVariables(variables) ? "1" : "0")
+                        resultExpression.append(try innerExpression.checkExpression(withVariables: variables) ? "1" : "0")
                         closeBracket()
                     }
                     else {
@@ -311,7 +337,7 @@ extension String {
                 
             case .inExpressionRightOperand:
                 if value == " "  || lastIndex {
-                    if lastIndex {
+                    if value != " " && lastIndex {
                         expRightOperand.append(value)
                     }
                     
@@ -348,19 +374,17 @@ extension String {
 }
 
 
+try! "  \"2\"   ==  '2'  ".checkExpression()
+try! " 1  ==  1 ".checkExpression()
+try! " 1.2  ==  1.2 ".checkExpression()
+try! " var1  ==  1 ".checkExpression(withVariables: ["var1" : 1])
+try! " var1  ==  1.2 ".checkExpression(withVariables: ["var1" : 1.2])
+try! " var1  ==  'test' ".checkExpression(withVariables: ["var1" : "test"])
+try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : "test", "var2" : "test"])
+try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1, "var2" : 1])
+try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
 
 
-let variables:[String : Any] = ["var1" : 1, //1,  //1.3  //"1"
-                                "var2" : "2",
-                                "var3" : 2,
-                                "var4" : 1]
+//"(var1 == 1 && var2 == 2) || var2 == var3 || (var1 == var4 && (var4 == 1 && var2 == \"2\"))"
 
-//let expression = "  var1   ==  \"pippo\""
-//let expression = "  var1   ==   1 "
-let expression = "  var2   ==  2  "
-
-//let expression = "(var1 == 1 && var2 == 2) || var2 == var3 || (var1 == var4 && (var4 == 1 && var2 == \"2\"))"
-
-
-try! expression.checkExpressionWithVariables(variables)
 
