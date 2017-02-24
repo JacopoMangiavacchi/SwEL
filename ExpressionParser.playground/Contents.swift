@@ -8,7 +8,8 @@ enum ExpressionError : Error {
     case invalidOperator
     case invalidOperand
     case differentOperandTypes
-    case unsupportedOperandType
+    case invalidOperandType
+    case invalidCondition
 }
 
 enum ExpressionOperator : String {
@@ -26,8 +27,8 @@ enum ExpressionBracket : String {
 }
 
 enum ExpressionCondition : String {
-    case and = "||"
-    case or = "&&"
+    case or = "||"
+    case and = "&&"
 }
 
 enum ExpressionStatus {
@@ -42,8 +43,6 @@ enum ExpressionStatus {
 
 extension String {
     func checkExpression(withVariables variables: [String : Any]? = nil) throws -> Bool {
-        print("IN: \(self)")
-        
         var previousExpression = true
         
         var status = ExpressionStatus.clear
@@ -105,18 +104,18 @@ extension String {
             expOperator = ""
             condition = ""
         }
+
+        func iterateEnum<T: Hashable>(_: T.Type) -> AnyIterator<T> {
+            var i = 0
+            return AnyIterator {
+                let next = withUnsafeBytes(of: &i) { $0.load(as: T.self) }
+                if next.hashValue != i { return nil }
+                i += 1
+                return next
+            }
+        }
         
         func getValidOperator(_ op: String) throws -> ExpressionOperator {
-            func iterateEnum<T: Hashable>(_: T.Type) -> AnyIterator<T> {
-                var i = 0
-                return AnyIterator {
-                    let next = withUnsafeBytes(of: &i) { $0.load(as: T.self) }
-                    if next.hashValue != i { return nil }
-                    i += 1
-                    return next
-                }
-            }
-
             var valid = false
             
             for validOp in iterateEnum(ExpressionOperator.self) {
@@ -133,7 +132,6 @@ extension String {
                 throw ExpressionError.invalidOperator
             }
         }
-        
         
         func compareInt(left: Int, right: Int, op: ExpressionOperator) -> Bool {
             switch op {
@@ -166,7 +164,6 @@ extension String {
             return false
         }
         
-        
         func compareString(left: String, right: String, op: ExpressionOperator) -> Bool {
             switch op {
             case .equal:
@@ -198,7 +195,6 @@ extension String {
             return false
         }
         
-        
         func compareDouble(left: Double, right: Double, op: ExpressionOperator) -> Bool {
             switch op {
             case .equal:
@@ -229,7 +225,6 @@ extension String {
 
             return false
         }
-        
         
         func evaluateOperand(operand: String) throws -> Any {
             guard !operand.isEmpty else {
@@ -265,7 +260,6 @@ extension String {
                 }
             }
         }
-
         
         func evaluateExpression(left: String, op: ExpressionOperator, right: String) throws -> Bool {
             let leftValue = try evaluateOperand(operand: left)
@@ -288,12 +282,33 @@ extension String {
                 equal = compareDouble(left: leftValue as! Double, right: rightValue as! Double, op: op)
                 
             default:
-                throw ExpressionError.unsupportedOperandType
+                throw ExpressionError.invalidOperandType
             }
             
             
             return equal
         }
+        
+        func evaluateCondition(condition: String) throws -> ExpressionCondition {
+            var valid = false
+            
+            for validOp in iterateEnum(ExpressionCondition.self) {
+                if condition == validOp.rawValue {
+                    valid = true
+                    break
+                }
+            }
+            
+            if valid {
+                return ExpressionCondition(rawValue: condition)!
+            }
+            else {
+                throw ExpressionError.invalidCondition
+            }
+        }
+
+        
+        //START
         
         clear()
         for index in self.characters.indices {
@@ -381,12 +396,15 @@ extension String {
                     }
                     
                     if !condition.isEmpty {
+                        let realCondition = try evaluateCondition(condition: condition)
                         
-                        //TODO: EVALUATE IF && OR ||
-
-                        //TODO: EVALUATE if previousExpression == false && condition == '&&' then return false
-
-                        
+                        if realCondition == .and && !previousExpression {
+                            return false
+                        }
+                        if realCondition == .or && previousExpression {
+                            return true
+                        }
+                            
                         clear()
                     }
                     else {
@@ -423,9 +441,10 @@ try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1, "var2" : 1])
 try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
 try! " (var1  ==  var2) ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
 
-try! "var1 == 1 && var2 == 2".checkExpression(withVariables: ["var1" : 0, "var2" : 2])
+try! "var1 == 1 && var2 == 2".checkExpression(withVariables: ["var1" : 1, "var2" : 2])
+try! "var1 == 1 || var2 == 2".checkExpression(withVariables: ["var1" : 1, "var2" : 2])
 
-//try! "(var1 == 1 && var2 == 2) || var2 == var3 || (var1 == var4 && (var4 == 1 && var2 == \"2\"))".checkExpression(withVariables: ["var1" : 1, "var2" : 2, "var3" : 2, "var4" : 1])
+try! "(var1 >= 1 && var2 > 7) || var2 == var1 || (var1 == var4 && (var4 == 5 || var2 > 1))".checkExpression(withVariables: ["var1" : 1, "var2" : 2, "var3" : 2, "var4" : 1])
 
 
 
