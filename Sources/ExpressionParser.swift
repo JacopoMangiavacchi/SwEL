@@ -1,8 +1,54 @@
-//: ExpressionParser
+//
+//  ExpressionParser.swift
+//  ExpressionParser
+//
+//  Version 0.1
+//
+//  Created by Jacopo Mangiavacchi on 25/02/2017.
+//  Copyright © 2017 Jacopo Mangiavacchi. All rights reserved.
+//
+//  Distributed under the permissive zlib license
+//  Get the latest version from here:
+//
+//  https://github.com/JacopoMangiavacchi/Swift-Expression-Parser
+//
+//  This software is provided 'as-is', without any express or implied
+//  warranty.  In no event will the authors be held liable for any damages
+//  arising from the use of this software.
+//
+//  Permission is granted to anyone to use this software for any purpose,
+//  including commercial applications, and to alter it and redistribute it
+//  freely, subject to the following restrictions:
+//
+//  1. The origin of this software must not be misrepresented; you must not
+//  claim that you wrote the original software. If you use this software
+//  in a product, an acknowledgment in the product documentation would be
+//  appreciated but is not required.
+//
+//  2. Altered source versions must be plainly marked as such, and must not be
+//  misrepresented as being the original software.
+//
+//  3. This notice may not be removed or altered from any source distribution.
+//
+//
+//  For evaluating numeric expressions inside the AND/OR expression conditions 
+//  this Package use Expression software that is Copyright (c) 2016 Nick Lockwood
+//  (see Expression.swift)
+//
 
 import Foundation
 
-enum ExpressionError : Error {
+/// ExpressionError is throwed by *checkExpression()* if the expression string is not well formed
+///
+/// - invalidSyntax: generic error
+/// - unclosedBracket: a round bracket has been opened but not closed
+/// - invalidOperator: operator is different than ==, !=, >, >=, <, <=
+/// - invalidOperand: operand is a string literal beginning with " or ' but not ending with the same symbol
+/// - differentOperandTypes: the expression is comparing two operand of different type (Int, Double or String)
+/// - invalidOperandType: operand type different than Int, Double or String
+/// - invalidCondition: condition is different than && or ||
+///
+public enum ExpressionError : Error {
     case invalidSyntax
     case unclosedBracket
     case invalidOperator
@@ -12,7 +58,7 @@ enum ExpressionError : Error {
     case invalidCondition
 }
 
-enum ExpressionOperator : String {
+fileprivate enum ExpressionOperator : String {
     case equal = "=="
     case different = "!="
     case greater = ">"
@@ -21,17 +67,17 @@ enum ExpressionOperator : String {
     case lessEqual = "<="
 }
 
-enum ExpressionBracket : String {
+fileprivate enum ExpressionBracket : String {
     case open = "("
     case close = ")"
 }
 
-enum ExpressionCondition : String {
+fileprivate enum ExpressionCondition : String {
     case or = "||"
     case and = "&&"
 }
 
-enum ExpressionStatus {
+fileprivate enum ExpressionStatus {
     case clear
     case inBracketExpression
     case inExpressionLeftOperand
@@ -41,8 +87,23 @@ enum ExpressionStatus {
 }
 
 
+
 extension String {
-    func checkExpression(withVariables variables: [String : Any]? = nil) throws -> Bool {
+
+    /// *checkExpression()* evaluate complex expressions with AND/OR conditions
+    /// and Dynamic bindings to parameters from any String at runtime
+    ///
+    /// *example 1*:  try! "(1 == 2 || 2 < 4) && 'test' != 'ko'".checkExpression()
+    ///
+    /// *example 2*:  try! "var1 == var2".checkExpression(withVariables: ["var1" : 1, "var2" : 2])
+    ///
+    /// - Parameter variables: optional Dictionary of variables to bind values to parameter name in the expression string
+    ///
+    /// - Returns: A Bool indicating the result of the expression
+    ///
+    /// - Throws: ExpressionError if expression string is not well formed (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
+    ///
+    public func checkExpression(withVariables variables: [String : Any]? = nil) throws -> Bool {
         var previousExpression = true
         
         var status = ExpressionStatus.clear
@@ -53,9 +114,9 @@ extension String {
         var expRightOperand = ""
         var expOperator = ""
         var condition = ""
-
+        
         var validOperator:ExpressionOperator!
-
+        
         func clear() {
             status = .clear
             innerExpression = ""
@@ -104,7 +165,7 @@ extension String {
             expOperator = ""
             condition = ""
         }
-
+        
         func iterateEnum<T: Hashable>(_: T.Type) -> AnyIterator<T> {
             var i = 0
             return AnyIterator {
@@ -191,7 +252,7 @@ extension String {
                     return true
                 }
             }
-
+            
             return false
         }
         
@@ -222,7 +283,7 @@ extension String {
                     return true
                 }
             }
-
+            
             return false
         }
         
@@ -249,7 +310,7 @@ extension String {
                     if !operand.hasSuffix("\"") {
                         throw ExpressionError.invalidOperand
                     }
-
+                    
                     return operand.replacingOccurrences(of: "\"", with: "")
                 }
                 else {
@@ -268,7 +329,7 @@ extension String {
             guard type(of: leftValue) == type(of: rightValue) else {
                 throw ExpressionError.differentOperandTypes
             }
-
+            
             var equal = false
             
             switch "\(type(of: leftValue))" {
@@ -306,7 +367,7 @@ extension String {
                 throw ExpressionError.invalidCondition
             }
         }
-
+        
         
         //START
         
@@ -387,9 +448,8 @@ extension String {
                 else {
                     expRightOperand.append(value)
                 }
-            
+                
             case .inCondition:
-                condition
                 if value == " "  || lastIndex {
                     if value != " " && lastIndex {
                         condition.append(value)
@@ -404,7 +464,7 @@ extension String {
                         if realCondition == .or && previousExpression {
                             return true
                         }
-                            
+                        
                         clear()
                     }
                     else {
@@ -428,30 +488,6 @@ extension String {
         return previousExpression
     }
 }
-
-
-try! "  \"2\"   ==  '2'  ".checkExpression()
-try! " 1  ==  1 ".checkExpression()
-try! " 1.2  ==  1.2 ".checkExpression()
-try! " var1  ==  1 ".checkExpression(withVariables: ["var1" : 1])
-try! " var1  ==  1.2 ".checkExpression(withVariables: ["var1" : 1.2])
-try! " var1  ==  'test' ".checkExpression(withVariables: ["var1" : "test"])
-try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : "test", "var2" : "test"])
-try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1, "var2" : 1])
-try! " var1  ==  var2 ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
-try! " (var1  ==  var2) ".checkExpression(withVariables: ["var1" : 1.2, "var2" : 1.2])
-
-try! "var1 == 1 && var2 == 2".checkExpression(withVariables: ["var1" : 1, "var2" : 2])
-try! "var1 == 1 || var2 == 2".checkExpression(withVariables: ["var1" : 1, "var2" : 2])
-
-try! "(var1 >= 1 && var2 > 7) || var2 == var1 || (var1 == var4 && (var4 == 5 || var2 > 1))".checkExpression(withVariables: ["var1" : 1, "var2" : 2, "var3" : 2, "var4" : 1])
-
-
-
-//TODO: ADD FUNCTION: upper, lower, substr, regex ...
-//TODO: ADD ARITMETIC OPERATION +, -, *, /, %
-//TODO: ADD BRACKET ON OPERAND
-
 
 
 
