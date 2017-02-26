@@ -31,7 +31,7 @@
 //  3. This notice may not be removed or altered from any source distribution.
 //
 //
-//  For evaluating numeric expressions inside the AND/OR expression conditions 
+//  For evaluating numeric expressions inside the AND/OR expression conditions
 //  this Package use Expression software that is Copyright (c) 2016 Nick Lockwood
 //  (see Expression.swift)
 //
@@ -77,6 +77,11 @@ fileprivate enum ExpressionCondition : String {
     case and = "&&"
 }
 
+fileprivate enum ExpressionFunction : String {
+    case intFunction = "Int("
+    case doubleFunction = "Double("
+}
+
 fileprivate enum ExpressionStatus {
     case clear
     case inBracketExpression
@@ -89,7 +94,7 @@ fileprivate enum ExpressionStatus {
 
 
 extension String {
-
+    
     /// *checkExpression()* evaluate complex expressions with AND/OR conditions
     /// and Dynamic bindings to parameters from any String at runtime
     ///
@@ -287,6 +292,13 @@ extension String {
             return false
         }
         
+        func calculateExpression(_ expression: String) throws -> Double {
+            
+            print(expression)
+            
+            return try Expression(expression).evaluate()
+        }
+        
         func evaluateOperand(operand: String) throws -> Any {
             guard !operand.isEmpty else {
                 throw ExpressionError.invalidOperand
@@ -312,6 +324,26 @@ extension String {
                     }
                     
                     return operand.replacingOccurrences(of: "\"", with: "")
+                }
+                else if operand.hasPrefix(ExpressionFunction.intFunction.rawValue) {
+                    if !operand.hasSuffix(")") {
+                        throw ExpressionError.invalidOperand
+                    }
+                    
+                    let startIndex = operand.index(operand.startIndex, offsetBy: ExpressionFunction.intFunction.rawValue.characters.count)
+                    let endIndex = operand.index(operand.endIndex, offsetBy: -2)
+                    
+                    return try Int(calculateExpression(operand[startIndex...endIndex]))
+                }
+                else if operand.hasPrefix(ExpressionFunction.doubleFunction.rawValue) {
+                    if !operand.hasSuffix(")") {
+                        throw ExpressionError.invalidOperand
+                    }
+                    
+                    let startIndex = operand.index(operand.startIndex, offsetBy: ExpressionFunction.doubleFunction.rawValue.characters.count)
+                    let endIndex = operand.index(operand.endIndex, offsetBy: -2)
+                    
+                    return try calculateExpression(operand[startIndex...endIndex])
                 }
                 else {
                     if let variable = variables?[operand] {
