@@ -115,6 +115,7 @@ extension String {
         
         var innerExpression = ""
         var innerBracketCounter = 0
+        var inOperandBracketCounter = 0
         var expLeftOperand = ""
         var expRightOperand = ""
         var expOperator = ""
@@ -126,6 +127,7 @@ extension String {
             status = .clear
             innerExpression = ""
             innerBracketCounter = 0
+            inOperandBracketCounter = 0
             expLeftOperand = ""
             expRightOperand = ""
             expOperator = ""
@@ -149,6 +151,7 @@ extension String {
             expLeftOperand = ""
             expRightOperand = ""
             expOperator = ""
+            inOperandBracketCounter = 0
         }
         
         func getOperator() {
@@ -159,12 +162,14 @@ extension String {
         func getRightOperand() {
             status = .inExpressionRightOperand
             expRightOperand = ""
+            inOperandBracketCounter = 0
         }
         
         func closeExpression() {
             status = .inCondition
             innerExpression = ""
             innerBracketCounter = 0
+            inOperandBracketCounter = 0
             expLeftOperand = ""
             expRightOperand = ""
             expOperator = ""
@@ -442,7 +447,14 @@ extension String {
                 }
                 
             case .inExpressionLeftOperand:
-                if value == " " {
+                if value == ExpressionBracket.open.rawValue {
+                    inOperandBracketCounter += 1
+                }
+                if value == ExpressionBracket.close.rawValue {
+                    inOperandBracketCounter -= 1
+                }
+                
+                if value == " " && inOperandBracketCounter == 0 {
                     getOperator()
                 }
                 else {
@@ -464,7 +476,14 @@ extension String {
                 }
                 
             case .inExpressionRightOperand:
-                if value == " "  || lastIndex {
+                if value == ExpressionBracket.open.rawValue {
+                    inOperandBracketCounter += 1
+                }
+                if value == ExpressionBracket.close.rawValue {
+                    inOperandBracketCounter -= 1
+                }
+                
+                if (value == " " && inOperandBracketCounter == 0) || lastIndex {
                     if value != " " && lastIndex {
                         expRightOperand.append(value)
                     }
