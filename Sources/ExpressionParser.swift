@@ -92,6 +92,20 @@ fileprivate enum ExpressionStatus {
 }
 
 
+extension Dictionary {
+    func mapDictionary(transform: (Key, Value) -> (Key, Value)?) -> Dictionary<Key, Value> {
+        var dict = [Key: Value]()
+        for key in keys {
+            guard let value = self[key], let keyValue = transform(key, value) else {
+                continue
+            }
+            
+            dict[keyValue.0] = keyValue.1
+        }
+        return dict
+    }
+}
+
 
 extension String {
     
@@ -298,10 +312,12 @@ extension String {
         }
         
         func calculateExpression(_ expression: String) throws -> Double {
+            //variables: [String : Any]?  ==>  constants: [String: Double]?
+            let constants: [String: Double]? = variables?.mapDictionary { ($0, $1 as? Double ?? 0.0) } as! [String : Double]?
             
-            print(expression)
+            print("e:\(expression) c:\(constants)")
             
-            return try Expression(expression).evaluate()
+            return try Expression(expression, constants: constants).evaluate()
         }
         
         func evaluateOperand(operand: String) throws -> Any {
