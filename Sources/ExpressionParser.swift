@@ -312,10 +312,16 @@ extension String {
         }
         
         func calculateExpression(_ expression: String) throws -> Double {
-            //variables: [String : Any]?  ==>  constants: [String: Double]?
-            let constants: [String: Double]? = variables?.mapDictionary { ($0, $1 as? Double ?? 0.0) } as! [String : Double]?
-            
-            print("e:\(expression) c:\(constants)")
+            //Convert Dictionary variables: [String : Any]?  ==>  constants: [String: Double]?
+            let constants: [String: Double]? = variables?.mapDictionary { (k,v) in
+                if let d = v as? Double {
+                    return (k, d)
+                }
+                else if let i = v as? Int {
+                    return (k, Double(i))
+                }
+                return nil
+                } as! [String : Double]?
             
             return try Expression(expression, constants: constants).evaluate()
         }
