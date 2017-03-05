@@ -1,8 +1,8 @@
 //
-//  ExpressionParser.swift
-//  ExpressionParser
+//  ConditionParser.swift
+//  ConditionParser
 //
-//  Version 0.1
+//  Version 0.2
 //
 //  Created by Jacopo Mangiavacchi on 25/02/2017.
 //  Copyright © 2017 Jacopo Mangiavacchi. All rights reserved.
@@ -10,7 +10,7 @@
 //  Distributed under the permissive zlib license
 //  Get the latest version from here:
 //
-//  https://github.com/JacopoMangiavacchi/Swift-Expression-Parser
+//  https://github.com/JacopoMangiavacchi/SwiftConditionParser
 //
 //  This software is provided 'as-is', without any express or implied
 //  warranty.  In no event will the authors be held liable for any damages
@@ -31,24 +31,24 @@
 //  3. This notice may not be removed or altered from any source distribution.
 //
 //
-//  For evaluating numeric expressions inside the AND/OR expression conditions
-//  this Package use Expression software that is Copyright (c) 2016 Nick Lockwood
+//  For evaluating numeric expressions inside the AND/OR conditions this package
+//  use Expression software that is Copyright (c) 2016 Nick Lockwood
 //  (see Expression.swift)
 //
 
 import Foundation
 
-/// ExpressionError is throwed by *checkExpression()* if the expression string is not well formed
+/// ConditionError is throwed by *checkCondition()* if the condition string is not well formed
 ///
 /// - invalidSyntax: generic error
 /// - unclosedBracket: a round bracket has been opened but not closed
 /// - invalidOperator: operator is different than ==, !=, >, >=, <, <=
 /// - invalidOperand: operand is a string literal beginning with " or ' but not ending with the same symbol
-/// - differentOperandTypes: the expression is comparing two operand of different type (Int, Double or String)
+/// - differentOperandTypes: the condition is comparing two operand of different type (Int, Double or String)
 /// - invalidOperandType: operand type different than Int, Double or String
 /// - invalidCondition: condition is different than && or ||
 ///
-public enum ExpressionError : Error {
+public enum ConditionError : Error {
     case invalidSyntax
     case unclosedBracket
     case invalidOperator
@@ -58,7 +58,7 @@ public enum ExpressionError : Error {
     case invalidCondition
 }
 
-fileprivate enum ExpressionOperator : String {
+fileprivate enum ConditionOperator : String {
     case equal = "=="
     case different = "!="
     case greater = ">"
@@ -67,27 +67,27 @@ fileprivate enum ExpressionOperator : String {
     case lessEqual = "<="
 }
 
-fileprivate enum ExpressionBracket : String {
+fileprivate enum ConditionBracket : String {
     case open = "("
     case close = ")"
 }
 
-fileprivate enum ExpressionCondition : String {
+fileprivate enum ConditionLogicOperator : String {
     case or = "||"
     case and = "&&"
 }
 
-fileprivate enum ExpressionFunction : String {
+fileprivate enum ConditionFunction : String {
     case intFunction = "Int("
     case doubleFunction = "Double("
 }
 
-fileprivate enum ExpressionStatus {
+fileprivate enum ConditionStatus {
     case clear
-    case inBracketExpression
-    case inExpressionLeftOperand
-    case inExpressionOperator
-    case inExpressionRightOperand
+    case inBracketCondition
+    case inConditionLeftOperand
+    case inConditionOperator
+    case inConditionRightOperand
     case inCondition
 }
 
@@ -109,84 +109,84 @@ extension Dictionary {
 
 extension String {
     
-    /// *checkExpression()* evaluate complex expressions with AND/OR conditions
-    /// and Dynamic bindings to parameters from any String at runtime
+    /// *checkCondition()* evaluate complex conditions with AND/OR, infinite level of brackets and dynamic
+    /// bindings to parameters from any String at runtime
     ///
-    /// *example 1*:  try! "(1 == 2 || 2 < 4) && 'test' != 'ko'".checkExpression()
+    /// *example 1*:  try! "(1 == 2 || 2 < 4) && 'test' != 'ko'".checkCondition()
     ///
-    /// *example 2*:  try! "var1 == var2".checkExpression(withVariables: ["var1" : 1, "var2" : 2])
+    /// *example 2*:  try! "var1 == var2".checkCondition(withVariables: ["var1" : 1, "var2" : 2])
     ///
-    /// - Parameter variables: optional Dictionary of variables to bind values to parameter name in the expression string
+    /// - Parameter variables: optional Dictionary of variables to bind values to parameter name in the condition string
     ///
-    /// - Returns: A Bool indicating the result of the expression
+    /// - Returns: A Bool indicating the result of the condition
     ///
-    /// - Throws: ExpressionError if expression string is not well formed (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
+    /// - Throws: ConditionError if condition string is not well formed (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
-    public func checkExpression(withVariables variables: [String : Any]? = nil) throws -> Bool {
-        var previousExpression = true
+    public func checkCondition(withVariables variables: [String : Any]? = nil) throws -> Bool {
+        var previousCondition = true
         
-        var status = ExpressionStatus.clear
+        var status = ConditionStatus.clear
         
-        var innerExpression = ""
+        var innerCondition = ""
         var innerBracketCounter = 0
         var inOperandBracketCounter = 0
-        var expLeftOperand = ""
-        var expRightOperand = ""
-        var expOperator = ""
+        var condLeftOperand = ""
+        var condRightOperand = ""
+        var condOperator = ""
         var condition = ""
         
-        var validOperator:ExpressionOperator!
+        var validOperator:ConditionOperator!
         
         func clear() {
             status = .clear
-            innerExpression = ""
+            innerCondition = ""
             innerBracketCounter = 0
             inOperandBracketCounter = 0
-            expLeftOperand = ""
-            expRightOperand = ""
-            expOperator = ""
+            condLeftOperand = ""
+            condRightOperand = ""
+            condOperator = ""
             condition = ""
         }
         
         func openBracket() {
-            status = .inBracketExpression
-            innerExpression = ""
+            status = .inBracketCondition
+            innerCondition = ""
             innerBracketCounter = 1
         }
         
         func closeBracket() {
             status = .inCondition
-            innerExpression = ""
+            innerCondition = ""
             innerBracketCounter = 0
         }
         
         func getLeftOperand() {
-            status = .inExpressionLeftOperand
-            expLeftOperand = ""
-            expRightOperand = ""
-            expOperator = ""
+            status = .inConditionLeftOperand
+            condLeftOperand = ""
+            condRightOperand = ""
+            condOperator = ""
             inOperandBracketCounter = 0
         }
         
         func getOperator() {
-            status = .inExpressionOperator
-            expOperator = ""
+            status = .inConditionOperator
+            condOperator = ""
         }
         
         func getRightOperand() {
-            status = .inExpressionRightOperand
-            expRightOperand = ""
+            status = .inConditionRightOperand
+            condRightOperand = ""
             inOperandBracketCounter = 0
         }
         
-        func closeExpression() {
+        func closeCondition() {
             status = .inCondition
-            innerExpression = ""
+            innerCondition = ""
             innerBracketCounter = 0
             inOperandBracketCounter = 0
-            expLeftOperand = ""
-            expRightOperand = ""
-            expOperator = ""
+            condLeftOperand = ""
+            condRightOperand = ""
+            condOperator = ""
             condition = ""
         }
         
@@ -200,10 +200,10 @@ extension String {
             }
         }
         
-        func getValidOperator(_ op: String) throws -> ExpressionOperator {
+        func getValidOperator(_ op: String) throws -> ConditionOperator {
             var valid = false
             
-            for validOp in iterateEnum(ExpressionOperator.self) {
+            for validOp in iterateEnum(ConditionOperator.self) {
                 if op == validOp.rawValue {
                     valid = true
                     break
@@ -211,14 +211,14 @@ extension String {
             }
             
             if valid {
-                return ExpressionOperator(rawValue: op)!
+                return ConditionOperator(rawValue: op)!
             }
             else {
-                throw ExpressionError.invalidOperator
+                throw ConditionError.invalidOperator
             }
         }
         
-        func compareInt(left: Int, right: Int, op: ExpressionOperator) -> Bool {
+        func compareInt(left: Int, right: Int, op: ConditionOperator) -> Bool {
             switch op {
             case .equal:
                 if left == right {
@@ -249,7 +249,7 @@ extension String {
             return false
         }
         
-        func compareString(left: String, right: String, op: ExpressionOperator) -> Bool {
+        func compareString(left: String, right: String, op: ConditionOperator) -> Bool {
             switch op {
             case .equal:
                 if left == right {
@@ -280,7 +280,7 @@ extension String {
             return false
         }
         
-        func compareDouble(left: Double, right: Double, op: ExpressionOperator) -> Bool {
+        func compareDouble(left: Double, right: Double, op: ConditionOperator) -> Bool {
             switch op {
             case .equal:
                 if left == right {
@@ -328,7 +328,7 @@ extension String {
         
         func evaluateOperand(operand: String) throws -> Any {
             guard !operand.isEmpty else {
-                throw ExpressionError.invalidOperand
+                throw ConditionError.invalidOperand
             }
             
             if let intOperand = Int(operand) {
@@ -340,34 +340,34 @@ extension String {
             else {
                 if operand.hasPrefix("'") {
                     if !operand.hasSuffix("'") {
-                        throw ExpressionError.invalidOperand
+                        throw ConditionError.invalidOperand
                     }
                     
                     return operand.replacingOccurrences(of: "'", with: "")
                 }
                 else if operand.hasPrefix("\"") {
                     if !operand.hasSuffix("\"") {
-                        throw ExpressionError.invalidOperand
+                        throw ConditionError.invalidOperand
                     }
                     
                     return operand.replacingOccurrences(of: "\"", with: "")
                 }
-                else if operand.hasPrefix(ExpressionFunction.intFunction.rawValue) {
+                else if operand.hasPrefix(ConditionFunction.intFunction.rawValue) {
                     if !operand.hasSuffix(")") {
-                        throw ExpressionError.invalidOperand
+                        throw ConditionError.invalidOperand
                     }
                     
-                    let startIndex = operand.index(operand.startIndex, offsetBy: ExpressionFunction.intFunction.rawValue.characters.count)
+                    let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.intFunction.rawValue.characters.count)
                     let endIndex = operand.index(operand.endIndex, offsetBy: -2)
                     
                     return try Int(calculateExpression(operand[startIndex...endIndex]))
                 }
-                else if operand.hasPrefix(ExpressionFunction.doubleFunction.rawValue) {
+                else if operand.hasPrefix(ConditionFunction.doubleFunction.rawValue) {
                     if !operand.hasSuffix(")") {
-                        throw ExpressionError.invalidOperand
+                        throw ConditionError.invalidOperand
                     }
                     
-                    let startIndex = operand.index(operand.startIndex, offsetBy: ExpressionFunction.doubleFunction.rawValue.characters.count)
+                    let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.doubleFunction.rawValue.characters.count)
                     let endIndex = operand.index(operand.endIndex, offsetBy: -2)
                     
                     return try calculateExpression(operand[startIndex...endIndex])
@@ -376,17 +376,17 @@ extension String {
                     if let variable = variables?[operand] {
                         return variable
                     }
-                    throw ExpressionError.invalidOperand
+                    throw ConditionError.invalidOperand
                 }
             }
         }
         
-        func evaluateExpression(left: String, op: ExpressionOperator, right: String) throws -> Bool {
+        func evaluateCondition(left: String, op: ConditionOperator, right: String) throws -> Bool {
             let leftValue = try evaluateOperand(operand: left)
             let rightValue = try evaluateOperand(operand: right)
             
             guard type(of: leftValue) == type(of: rightValue) else {
-                throw ExpressionError.differentOperandTypes
+                throw ConditionError.differentOperandTypes
             }
             
             var equal = false
@@ -402,17 +402,17 @@ extension String {
                 equal = compareDouble(left: leftValue as! Double, right: rightValue as! Double, op: op)
                 
             default:
-                throw ExpressionError.invalidOperandType
+                throw ConditionError.invalidOperandType
             }
             
             
             return equal
         }
         
-        func evaluateCondition(condition: String) throws -> ExpressionCondition {
+        func evaluateCondition(condition: String) throws -> ConditionLogicOperator {
             var valid = false
             
-            for validOp in iterateEnum(ExpressionCondition.self) {
+            for validOp in iterateEnum(ConditionLogicOperator.self) {
                 if condition == validOp.rawValue {
                     valid = true
                     break
@@ -420,10 +420,10 @@ extension String {
             }
             
             if valid {
-                return ExpressionCondition(rawValue: condition)!
+                return ConditionLogicOperator(rawValue: condition)!
             }
             else {
-                throw ExpressionError.invalidCondition
+                throw ConditionError.invalidCondition
             }
         }
         
@@ -437,7 +437,7 @@ extension String {
             
             switch status {
             case .clear:
-                if value == ExpressionBracket.open.rawValue {
+                if value == ConditionBracket.open.rawValue {
                     openBracket()
                 }
                 else if value == " " {
@@ -445,34 +445,34 @@ extension String {
                 }
                 else {
                     getLeftOperand()
-                    expLeftOperand.append(value)
+                    condLeftOperand.append(value)
                 }
                 
-            case .inBracketExpression:
-                if value == ExpressionBracket.open.rawValue {
+            case .inBracketCondition:
+                if value == ConditionBracket.open.rawValue {
                     innerBracketCounter += 1
-                    innerExpression.append(value)
+                    innerCondition.append(value)
                 }
                 else {
-                    if value == ExpressionBracket.close.rawValue {
+                    if value == ConditionBracket.close.rawValue {
                         innerBracketCounter -= 1
                     }
                     
                     if innerBracketCounter == 0 {
-                        previousExpression = try innerExpression.checkExpression(withVariables: variables)
+                        previousCondition = try innerCondition.checkCondition(withVariables: variables)
                         
                         closeBracket()
                     }
                     else {
-                        innerExpression.append(value)
+                        innerCondition.append(value)
                     }
                 }
                 
-            case .inExpressionLeftOperand:
-                if value == ExpressionBracket.open.rawValue {
+            case .inConditionLeftOperand:
+                if value == ConditionBracket.open.rawValue {
                     inOperandBracketCounter += 1
                 }
-                if value == ExpressionBracket.close.rawValue {
+                if value == ConditionBracket.close.rawValue {
                     inOperandBracketCounter -= 1
                 }
                 
@@ -480,13 +480,13 @@ extension String {
                     getOperator()
                 }
                 else {
-                    expLeftOperand.append(value)
+                    condLeftOperand.append(value)
                 }
                 
-            case .inExpressionOperator:
+            case .inConditionOperator:
                 if value == " " {
-                    if !expOperator.isEmpty {
-                        validOperator = try getValidOperator(expOperator)
+                    if !condOperator.isEmpty {
+                        validOperator = try getValidOperator(condOperator)
                         getRightOperand()
                     }
                     else {
@@ -494,32 +494,32 @@ extension String {
                     }
                 }
                 else {
-                    expOperator.append(value)
+                    condOperator.append(value)
                 }
                 
-            case .inExpressionRightOperand:
-                if value == ExpressionBracket.open.rawValue {
+            case .inConditionRightOperand:
+                if value == ConditionBracket.open.rawValue {
                     inOperandBracketCounter += 1
                 }
-                if value == ExpressionBracket.close.rawValue {
+                if value == ConditionBracket.close.rawValue {
                     inOperandBracketCounter -= 1
                 }
                 
                 if (value == " " && inOperandBracketCounter == 0) || lastIndex {
                     if value != " " && lastIndex {
-                        expRightOperand.append(value)
+                        condRightOperand.append(value)
                     }
                     
-                    if !expRightOperand.isEmpty {
-                        previousExpression = try evaluateExpression(left: expLeftOperand, op: validOperator, right: expRightOperand)
-                        closeExpression()
+                    if !condRightOperand.isEmpty {
+                        previousCondition = try evaluateCondition(left: condLeftOperand, op: validOperator, right: condRightOperand)
+                        closeCondition()
                     }
                     else {
                         //nop
                     }
                 }
                 else {
-                    expRightOperand.append(value)
+                    condRightOperand.append(value)
                 }
                 
             case .inCondition:
@@ -531,10 +531,10 @@ extension String {
                     if !condition.isEmpty {
                         let realCondition = try evaluateCondition(condition: condition)
                         
-                        if realCondition == .and && !previousExpression {
+                        if realCondition == .and && !previousCondition {
                             return false
                         }
-                        if realCondition == .or && previousExpression {
+                        if realCondition == .or && previousCondition {
                             return true
                         }
                         
@@ -551,16 +551,43 @@ extension String {
         }
         
         if status != .inCondition || !condition.isEmpty {
-            if status == .inBracketExpression {
-                throw ExpressionError.unclosedBracket
+            if status == .inBracketCondition {
+                throw ConditionError.unclosedBracket
             }
             
-            throw ExpressionError.invalidSyntax
+            throw ConditionError.invalidSyntax
         }
         
-        return previousExpression
+        return previousCondition
     }
 }
 
 
+//TODO: ADD FUNCTION: upper, lower,
+//TODO: ADD FUNCTION: range(string: String, regex: String) and substringWithRange  [WARNING: RANGE IS A TOUPLE]
 
+//TODO: ADD FUNCTION: validate(string: String, regex: String)
+
+
+//Supported math function in math expression:
+//
+//sqrt(x)
+//floor(x)
+//ceil(x)
+//round(x)
+//cos(x)
+//acos(x)
+//sin(x)
+//asin(x)
+//tan(x)
+//atan(x)
+//abs(x)
+//
+//pow(x,y)
+//max(x,y)
+//min(x,y)
+//atan2(x,y)
+//mod(x,y)
+//
+
+//TODO: ADD random()

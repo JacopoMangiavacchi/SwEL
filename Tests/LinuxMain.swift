@@ -1,6 +1,6 @@
 import XCTest
-@testable import ExpressionParserTests
+@testable import ConditionParserTests
 
 XCTMain([
-     testCase(ExpressionParserTests.allTests),
+     testCase(ConditionParserTests.allTests),
 ])

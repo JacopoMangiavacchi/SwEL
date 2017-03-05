@@ -4,28 +4,28 @@
 [![Twitter](https://img.shields.io/badge/twitter-@jacopomangia-blue.svg?maxAge=2592000)](http://twitter.com/jacopomangia)
 
 
-## What is Swift-Expression-Parser
+## What is SwiftConditionParser
 
-ExpressionParser is a Swift 3.x String extension for macOS, iOS and linux for evaluating complex expressions with AND/OR conditions and Dynamic bindings to parameters from any String at runtime.
+ConditionParser is a Swift 3.x String extension for macOS, iOS and linux for evaluating complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters from any String at runtime.
 
 
 ## How to install it?
 
-ExpressionParser is provided as as Swift 3.0 Package usable with Swift Package Manager on both macOS and linux
+ConditionParser is provided as as Swift 3.0 Package usable with Swift Package Manager on both macOS and linux
 
 In order to usit in your Swift project please include the following line in your Swift Package references:
 
-	.Package(url: "https://github.com/JacopoMangiavacchi/Swift-Expression-Parser", majorVersion: 0)
+	.Package(url: "https://github.com/JacopoMangiavacchi/SwiftConditionParser", majorVersion: 0)
 
 ## How to use it?
 
-It's super easy, you can call checkExpression() on any Swift String 
+It's super easy, you can call checkCondition() on any Swift String 
 
-	try! "(1 == 2 || 2 < 4) && 'test' != 'ko'".checkExpression()
+	try! "(1 == 2 || 2 < 4) && 'test' != 'ko'".checkCondition()
 
-Or you can pass a Dictionary of parameters to bind directly to the expression like this
+Or you can pass a Dictionary of parameters to bind directly to the condition like this
 
-	try! "(var1 == var2 || var2 < var3) && var4 != var5".checkExpression(withVariables: [
+	try! "(var1 == var2 || var2 < var3) && var4 != var5".checkCondition(withVariables: [
 		"var1" : 1,
 		"var2" : 2,
 		"var3" : 4,
@@ -33,10 +33,10 @@ Or you can pass a Dictionary of parameters to bind directly to the expression li
 		"var5" : "ko"
 	])
 
-The String extension checkExpression(), or checkExpression(withVariables:), will return a Bool value with the result of the evaluation if this is formally correct.  It will throws different exceptions according to diffferent syntax error in the string value or variables dictionary.
+The String extension checkCondition(), or checkCondition(withVariables:), will return a Bool value with the result of the evaluation if this is formally correct.  It will throws different exceptions according to diffferent syntax error in the string value or variables dictionary.
 
 
-## Evaluating numeric expressions inside the AND/OR expression conditions
+## Evaluating numeric expressions inside the AND/OR conditions
 
 **Warning: This is work in progress**
 
@@ -45,13 +45,13 @@ The String extension checkExpression(), or checkExpression(withVariables:), will
 
 
 
-## Contributing to Swift-Expression-Parser
+## Contributing to SwiftConditionParser
 
 All improvements are very welcome!
 
 1. Clone this repository.
 
-  `$ git clone https://github.com/JacopoMangiavacchi/Swift-Expression-Parser`
+  `$ git clone https://github.com/JacopoMangiavacchi/SwiftConditionParser`
 
 2. Build and run tests.
 
@@ -60,7 +60,7 @@ All improvements are very welcome!
 
 ## Reference to Open Source library used
 
-For evaluating numeric expressions inside the AND/OR expression conditions this Package use the Expression library provided by Nick Lockwood and available at https://github.com/nicklockwood/Expression
+For evaluating numeric expressions inside the AND/OR conditions this Package use the Expression library provided by Nick Lockwood and available at https://github.com/nicklockwood/Expression
 
 
 
