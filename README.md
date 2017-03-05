@@ -36,13 +36,38 @@ Or you can pass a Dictionary of parameters to bind directly to the condition lik
 The String extension checkCondition(), or checkCondition(withVariables:), will return a Bool value with the result of the evaluation if this is formally correct.  It will throws different exceptions according to diffferent syntax error in the string value or variables dictionary.
 
 
-## Evaluating numeric expressions inside the AND/OR conditions
+## Evaluating mathematic expressions inside the AND/OR conditions
 
-**Warning: This is work in progress**
+Mathematic expressions could be used on both left and right operand of any conditions using the syntax Int() or Double()
 
+For example this is a condition containing some basic arithmetic operations:
 
+	let condition = "(var1 == 2.0 || Double(var2) > Double(var1 + 0.5)) && 'test' != 'ko'"
 
+More complex mathematic expressions could be used with the help of the following functions:
 
+	sqrt(x)
+	floor(x)
+	ceil(x)
+	round(x)
+	cos(x)
+	acos(x)
+	sin(x)
+	asin(x)
+	tan(x)
+	atan(x)
+	abs(x)
+
+	pow(x,y)
+	max(x,y)
+	min(x,y)
+	atan2(x,y)
+	mod(x,y)
+
+Here is an example of a complex condition evaluation containing complex expression with functions:
+
+	let condition = "(var1 == 2.0 || Double(var2) == Double(var1 + min(0.5,3.5))) && 'test' != 'ko'"
+	try! condition.checkCondition(withVariables: ["var1" : 1.5, "var2" : 2, "var3" : "error"])
 
 
 ## Contributing to SwiftConditionParser
