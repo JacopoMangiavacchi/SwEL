@@ -326,6 +326,52 @@ extension String {
             return try Expression(expression, constants: constants).evaluate()
         }
         
+        func Search(text: String, regexp: String) -> Int {
+            if let range = text.range(of:regexp, options: .regularExpression) {
+                return text.distance(from: text.startIndex, to: range.lowerBound)
+            }
+
+            return -1
+        }
+
+        func SearchUpperCase(text: String, regexp: String) -> Int {
+            return Search(text: text.uppercased(), regexp: regexp)
+        }
+
+        func SearchLowerCase(text: String, regexp: String) -> Int {
+            return Search(text: text.lowercased(), regexp: regexp)
+        }
+
+        func Substring(text: String, regexp: String) -> String {
+            if let range = text.range(of:regexp, options: .regularExpression) {
+                return text.substring(with:range)
+            }
+
+            return ""
+        }
+
+        func SubstringUpperCase(text: String, regexp: String) -> String {
+            return Substring(text: text.uppercased(), regexp: regexp)
+        }
+
+        func SubstringLowerCase(text: String, regexp: String) -> String {
+            return Substring(text: text.lowercased(), regexp: regexp)
+        }
+
+        func Substring(text: String, from: Int, to: Int) -> String {
+
+            return ""
+        }
+
+        func SubstringUpperCase(text: String, from: Int, to: Int) -> String {
+            return Substring(text: text.uppercased(), from: from, to: to)
+        }
+
+        func SubstringLowerCase(text: String, from: Int, to: Int) -> String {
+            return Substring(text: text.lowercased(), from: from, to: to)
+        }
+
+
         func evaluateOperand(operand: String) throws -> Any {
             guard !operand.isEmpty else {
                 throw ConditionError.invalidOperand
