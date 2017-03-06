@@ -80,6 +80,8 @@ fileprivate enum ConditionLogicOperator : String {
 fileprivate enum ConditionFunction : String {
     case intFunction = "Int("
     case doubleFunction = "Double("
+    case searchFunction = "Search("         // Search("text", "regex")
+    case substringFunction = "Substring("   // Substring("text", "regex")
 }
 
 fileprivate enum ConditionStatus {
@@ -326,7 +328,7 @@ extension String {
             return try Expression(expression, constants: constants).evaluate()
         }
         
-        func Search(text: String, regexp: String) -> Int {
+        func search(text: String, regexp: String) -> Int {
             if let range = text.range(of:regexp, options: .regularExpression) {
                 return text.distance(from: text.startIndex, to: range.lowerBound)
             }
@@ -334,15 +336,15 @@ extension String {
             return -1
         }
 
-        func SearchUpperCase(text: String, regexp: String) -> Int {
-            return Search(text: text.uppercased(), regexp: regexp)
+        func searchUpperCase(text: String, regexp: String) -> Int {
+            return search(text: text.uppercased(), regexp: regexp)
         }
 
-        func SearchLowerCase(text: String, regexp: String) -> Int {
-            return Search(text: text.lowercased(), regexp: regexp)
+        func searchLowerCase(text: String, regexp: String) -> Int {
+            return search(text: text.lowercased(), regexp: regexp)
         }
 
-        func Substring(text: String, regexp: String) -> String {
+        func substring(text: String, regexp: String) -> String {
             if let range = text.range(of:regexp, options: .regularExpression) {
                 return text.substring(with:range)
             }
@@ -350,25 +352,34 @@ extension String {
             return ""
         }
 
-        func SubstringUpperCase(text: String, regexp: String) -> String {
-            return Substring(text: text.uppercased(), regexp: regexp)
+        func substringUpperCase(text: String, regexp: String) -> String {
+            return substring(text: text.uppercased(), regexp: regexp)
         }
 
-        func SubstringLowerCase(text: String, regexp: String) -> String {
-            return Substring(text: text.lowercased(), regexp: regexp)
+        func substringLowerCase(text: String, regexp: String) -> String {
+            return substring(text: text.lowercased(), regexp: regexp)
         }
 
-        func Substring(text: String, from: Int, to: Int) -> String {
+        func substring(text: String, from: Int, to: Int) -> String {
 
             return ""
         }
 
-        func SubstringUpperCase(text: String, from: Int, to: Int) -> String {
-            return Substring(text: text.uppercased(), from: from, to: to)
+        func substringUpperCase(text: String, from: Int, to: Int) -> String {
+            return substring(text: text.uppercased(), from: from, to: to)
         }
 
-        func SubstringLowerCase(text: String, from: Int, to: Int) -> String {
-            return Substring(text: text.lowercased(), from: from, to: to)
+        func substringLowerCase(text: String, from: Int, to: Int) -> String {
+            return substring(text: text.lowercased(), from: from, to: to)
+        }
+
+        func getParameters(buffer: String) -> [String] {
+            //split
+            //remove " or '
+
+            let parameters = ["1", "2"]
+
+            return parameters
         }
 
 
@@ -417,6 +428,30 @@ extension String {
                     let endIndex = operand.index(operand.endIndex, offsetBy: -2)
                     
                     return try calculateExpression(operand[startIndex...endIndex])
+                }
+                else if operand.hasPrefix(ConditionFunction.searchFunction.rawValue) {
+                    if !operand.hasSuffix(")") {
+                        throw ConditionError.invalidOperand
+                    }
+                    
+                    let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.searchFunction.rawValue.characters.count)
+                    let endIndex = operand.index(operand.endIndex, offsetBy: -2)
+                    
+                    let parameters = getParameters(buffer: operand[startIndex...endIndex])
+
+                    return search(text: parameters[0], regexp: parameters[1])
+                }
+                else if operand.hasPrefix(ConditionFunction.substringFunction.rawValue) {
+                    if !operand.hasSuffix(")") {
+                        throw ConditionError.invalidOperand
+                    }
+                    
+                    let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.substringFunction.rawValue.characters.count)
+                    let endIndex = operand.index(operand.endIndex, offsetBy: -2)
+                    
+                    let parameters = getParameters(buffer: operand[startIndex...endIndex])
+
+                    return substring(text: parameters[0], regexp: parameters[1])
                 }
                 else {
                     if let variable = variables?[operand] {
@@ -607,33 +642,3 @@ extension String {
         return previousCondition
     }
 }
-
-
-//TODO: ADD FUNCTION: upper, lower,
-//TODO: ADD FUNCTION: range(string: String, regex: String) and substringWithRange  [WARNING: RANGE IS A TOUPLE]
-
-//TODO: ADD FUNCTION: validate(string: String, regex: String)
-
-
-//Supported math function in math expression:
-//
-//sqrt(x)
-//floor(x)
-//ceil(x)
-//round(x)
-//cos(x)
-//acos(x)
-//sin(x)
-//asin(x)
-//tan(x)
-//atan(x)
-//abs(x)
-//
-//pow(x,y)
-//max(x,y)
-//min(x,y)
-//atan2(x,y)
-//mod(x,y)
-//
-
-//TODO: ADD random()
