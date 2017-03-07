@@ -4,20 +4,22 @@
 [![Twitter](https://img.shields.io/badge/twitter-@jacopomangia-blue.svg?maxAge=2592000)](http://twitter.com/jacopomangia)
 
 
-## What is SwiftConditionParser
+## What is SwiftExpressionLanguage (SEL)
 
-ConditionParser is a Swift 3.x String extension for macOS, iOS and linux for evaluating complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters from any String at runtime.
+SwiftExpressionLanguage is a Swift 3.x package for macOS, iOS and linux for evaluating complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters from any String at runtime.
 
 
 ## How to install it?
 
-ConditionParser is provided as as Swift 3.0 Package usable with Swift Package Manager on both macOS and linux
+SwiftExpressionLanguage is provided as as Swift 3.0 Package usable with Swift Package Manager on both macOS and linux
 
 In order to usit in your Swift project please include the following line in your Swift Package references:
 
-	.Package(url: "https://github.com/JacopoMangiavacchi/SwiftConditionParser", majorVersion: 0)
+	.Package(url: "https://github.com/JacopoMangiavacchi/SwiftExpressionLanguage", majorVersion: 0)
 
-## How to use it?
+## Super easy String Extension usage
+
+A SwiftExpressionLanguage Swift class is provided with easy method to evaluate condition at runtime but this package also provide Swift String Extension to easily
 
 It's super easy, you can call checkCondition() on any Swift String 
 
@@ -64,19 +66,38 @@ More complex mathematic expressions could be used with the help of the following
 	atan2(x,y)
 	mod(x,y)
 
-Here is an example of a complex condition evaluation containing complex expression with functions:
+Here is an example of a complex condition evaluation containing complex expression with math functions:
 
 	let condition = "(var1 == 2.0 || Double(var2) == Double(var1 + min(0.5,3.5))) && 'test' != 'ko'"
 	try! condition.checkCondition(withVariables: ["var1" : 1.5, "var2" : 2, "var3" : "error"])
 
 
-## Contributing to SwiftConditionParser
+## Evaluating string expressions inside the AND/OR conditions
+The following string regex function could be used on both left and right operand of any conditions
+
+	Search(string, regexp)  			// return -1 if not found
+	SearchUpper(string, regexp)  		// return -1 if not found
+	SearchLower(string, regexp)  		// return -1 if not found
+	Substring(string, regexp)  			// return "" if not found
+	SubstringUpper(string, regexp)  	// return "" if not found
+	SubstringLower(string, regexp)  	// return "" if not found
+
+Here is an example of a complex condition evaluation containing complex expression with string functions:
+
+	let text = "This is a test for testing regexp"
+	let condition = "Substring(\"\(text)\", regex) == result"
+	try! condition.checkCondition(withVariables: ["regex" : "test|tost",  "result" : "test"])
+
+## SwiftExpressionLanguage usage for advanced use case
+TODO
+
+## Contributing to SwiftExpressionLanguage
 
 All improvements are very welcome!
 
 1. Clone this repository.
 
-  `$ git clone https://github.com/JacopoMangiavacchi/SwiftConditionParser`
+  `$ git clone https://github.com/JacopoMangiavacchi/SwiftExpressionLanguage`
 
 2. Build and run tests.
 

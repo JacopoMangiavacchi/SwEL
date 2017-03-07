@@ -1,4 +1,4 @@
-ExpressionParser
+SwiftExpressionLanguage
 
 Copyright (c) 2017 Jacopo Mangiavacchi
 
