@@ -58,6 +58,7 @@ public enum ConditionError : Error {
     case invalidOperandType
     case invalidCondition
     case wrongNumberParametersToFunction
+    case invalidFunction
 }
 
 fileprivate enum ConditionOperator : String {
@@ -426,57 +427,45 @@ extension String {
                     
                     return operand.replacingOccurrences(of: "\"", with: "")
                 }
-                else if operand.hasPrefix(ConditionFunction.intFunction.rawValue) {
+                else if let range = operand.range(of: "(") {
                     if !operand.hasSuffix(")") {
                         throw ConditionError.invalidOperand
                     }
                     
-                    let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.intFunction.rawValue.characters.count)
+                    let functionNameRange = Range<String.Index>(uncheckedBounds: (lower: operand.startIndex, upper: range.upperBound))
+                    let functionName = operand.substring(with:functionNameRange)
+                    
                     let endIndex = operand.index(operand.endIndex, offsetBy: -2)
+                    let functionParameters = operand[range.upperBound...endIndex]
                     
-                    return try Int(calculateExpression(operand[startIndex...endIndex]))
-                }
-                else if operand.hasPrefix(ConditionFunction.doubleFunction.rawValue) {
-                    if !operand.hasSuffix(")") {
-                        throw ConditionError.invalidOperand
+                    switch functionName {
+                    case ConditionFunction.intFunction.rawValue:
+                        return try Int(calculateExpression(functionParameters))
+
+                    case ConditionFunction.doubleFunction.rawValue:
+                        return try calculateExpression(functionParameters)
+                        
+                    case ConditionFunction.searchFunction.rawValue:
+                        let parameters = getStringParameters(buffer: functionParameters)
+                        
+                        guard parameters.count == 2 else {
+                            throw ConditionError.wrongNumberParametersToFunction
+                        }
+                        
+                        return search(text: parameters[0], regexp: parameters[1])
+
+                    case ConditionFunction.substringFunction.rawValue:
+                        let parameters = getStringParameters(buffer: functionParameters)
+                        
+                        guard parameters.count == 2 else {
+                            throw ConditionError.wrongNumberParametersToFunction
+                        }
+                        
+                        return substring(text: parameters[0], regexp: parameters[1])
+
+                    default:
+                        throw ConditionError.invalidFunction
                     }
-                    
-                    let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.doubleFunction.rawValue.characters.count)
-                    let endIndex = operand.index(operand.endIndex, offsetBy: -2)
-                    
-                    return try calculateExpression(operand[startIndex...endIndex])
-                }
-                else if operand.hasPrefix(ConditionFunction.searchFunction.rawValue) {
-                    if !operand.hasSuffix(")") {
-                        throw ConditionError.invalidOperand
-                    }
-                    
-                    let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.searchFunction.rawValue.characters.count)
-                    let endIndex = operand.index(operand.endIndex, offsetBy: -2)
-                    
-                    let parameters = getStringParameters(buffer: operand[startIndex...endIndex])
-                    
-                    guard parameters.count == 2 else {
-                        throw ConditionError.wrongNumberParametersToFunction
-                    }
-                    
-                    return search(text: parameters[0], regexp: parameters[1])
-                }
-                else if operand.hasPrefix(ConditionFunction.substringFunction.rawValue) {
-                    if !operand.hasSuffix(")") {
-                        throw ConditionError.invalidOperand
-                    }
-                    
-                    let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.substringFunction.rawValue.characters.count)
-                    let endIndex = operand.index(operand.endIndex, offsetBy: -2)
-                    
-                    let parameters = getStringParameters(buffer: operand[startIndex...endIndex])
-                    
-                    guard parameters.count == 2 else {
-                        throw ConditionError.wrongNumberParametersToFunction
-                    }
-                    
-                    return substring(text: parameters[0], regexp: parameters[1])
                 }
                 else {
                     if let variable = variables?[operand] {
