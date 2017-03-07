@@ -82,14 +82,14 @@ fileprivate enum ConditionLogicOperator : String {
 }
 
 fileprivate enum ExpressionFunction : String {
-    case intFunction = "Int("
-    case doubleFunction = "Double("
-    case searchFunction = "Search("                     // Search("text", "regex")
-    case searchUpperFunction = "SearchUpper("           // SearchUpper("text", "regex")
-    case searchLowerFunction = "SearchLower("           // SearchLower("text", "regex")
-    case substringFunction = "Substring("               // Substring("text", "regex")
-    case substringUpperFunction = "SubstringUpper("     // SubstringUpper("text", "regex")
-    case substringLowerFunction = "SubstringLower("     // SubstringLower("text", "regex")
+    case intFunction = "int("                           // int("math expression") -> Int
+    case doubleFunction = "double("                     // double("math expression") -> Double
+    case searchFunction = "search("                     // search("text", "regex") -> Int
+    case searchUpperFunction = "searchUpper("           // searchUpper("text", "regex") -> Int
+    case searchLowerFunction = "searchLower("           // searchLower("text", "regex") -> Int
+    case substringFunction = "substring("               // substring("text", "regex") -> String
+    case substringUpperFunction = "substringUpper("     // substringUpper("text", "regex") -> String
+    case substringLowerFunction = "substringLower("     // substringLower("text", "regex") -> String
 }
 
 fileprivate enum ConditionStatus {
