@@ -38,7 +38,7 @@
 
 import Foundation
 
-/// ConditionError is throwed by *checkCondition()* if the condition string is not well formed
+/// SwELError is throwed by *checkCondition()* if the condition string is not well formed
 ///
 /// - invalidSyntax: generic error
 /// - unclosedBracket: a round bracket has been opened but not closed
@@ -50,7 +50,7 @@ import Foundation
 /// - wrongNumberParametersToFunction: an expression function has been called with wrong number of parameters
 /// - invalidFunction: an unsupported function has been called in the expression
 ///
-public enum ConditionError : Error {
+public enum SwELError : Error {
     case invalidSyntax
     case unclosedBracket
     case invalidOperator
@@ -81,7 +81,7 @@ fileprivate enum ConditionLogicOperator : String {
     case and = "&&"
 }
 
-fileprivate enum ConditionFunction : String {
+fileprivate enum ExpressionFunction : String {
     case intFunction = "Int("
     case doubleFunction = "Double("
     case searchFunction = "Search("                     // Search("text", "regex")
@@ -117,6 +117,16 @@ extension Dictionary {
 }
 
 
+/// *SwEL* (Swift Expression Language)
+///
+/// Evaluate complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters from any String at runtime
+///
+///     *example*: 
+///                 let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
+///                 let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
+///                 let exp = SwEL(condition)
+///                 try exp.checkCondition()
+///
 open class SwEL {
     public var expression: String
     public var variables: [String : Any]?
@@ -136,6 +146,16 @@ open class SwEL {
     private var validOperator:ConditionOperator!
 
     
+    /// *init()* initialize the *expression* and *variables* properties used by the *checkCondition()* method
+    ///     *example*: 
+    ///                 let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
+    ///                 let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
+    ///                 let exp = SwEL(condition)
+    ///                 try exp.checkCondition()
+    ///
+    /// - Parameter expression: an expression containing for example a condition to be evaluated with the *checkCondition()* metod
+    /// - Parameter variables: optional Dictionary of variables to bind values to parameter name in the condition string
+    ///
     public init(_ expression: String, variables: [String : Any]? = nil) {
         self.expression = expression
         self.variables = variables
@@ -144,15 +164,11 @@ open class SwEL {
     /// *checkCondition()* evaluate complex conditions with AND/OR, infinite level of brackets and dynamic
     /// bindings to parameters from any String at runtime
     ///
-    /// *example 1*:  try! "(1 == 2 || 2 < 4) && 'test' != 'ko'".checkCondition()
-    ///
-    /// *example 2*:  try! "var1 == var2".checkCondition(withVariables: ["var1" : 1, "var2" : 2])
-    ///
-    /// - Parameter variables: optional Dictionary of variables to bind values to parameter name in the condition string
+    /// It use public *expression* and *variables* properties
     ///
     /// - Returns: A Bool indicating the result of the condition
     ///
-    /// - Throws: ConditionError if condition string is not well formed (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
+    /// - Throws: SwELError if condition in the *expression* property is not well formed (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
     public func checkCondition() throws -> Bool {
         clear()
@@ -277,10 +293,10 @@ open class SwEL {
         
         if status != .inCondition || !condition.isEmpty {
             if status == .inBracketCondition {
-                throw ConditionError.unclosedBracket
+                throw SwELError.unclosedBracket
             }
             
-            throw ConditionError.invalidSyntax
+            throw SwELError.invalidSyntax
         }
         
         return previousCondition
@@ -365,7 +381,7 @@ open class SwEL {
             return ConditionOperator(rawValue: op)!
         }
         else {
-            throw ConditionError.invalidOperator
+            throw SwELError.invalidOperator
         }
     }
     
@@ -550,7 +566,7 @@ open class SwEL {
         let parameters = getStringParameters(buffer: buffer)
         
         guard parameters.count == number else {
-            throw ConditionError.wrongNumberParametersToFunction
+            throw SwELError.wrongNumberParametersToFunction
         }
         
         return parameters
@@ -559,7 +575,7 @@ open class SwEL {
     
     private func evaluateOperand(operand: String) throws -> Any {
         guard !operand.isEmpty else {
-            throw ConditionError.invalidOperand
+            throw SwELError.invalidOperand
         }
         
         if let intOperand = Int(operand) {
@@ -571,21 +587,21 @@ open class SwEL {
         else {
             if operand.hasPrefix("'") {
                 if !operand.hasSuffix("'") {
-                    throw ConditionError.invalidOperand
+                    throw SwELError.invalidOperand
                 }
                 
                 return operand.replacingOccurrences(of: "'", with: "")
             }
             else if operand.hasPrefix("\"") {
                 if !operand.hasSuffix("\"") {
-                    throw ConditionError.invalidOperand
+                    throw SwELError.invalidOperand
                 }
                 
                 return operand.replacingOccurrences(of: "\"", with: "")
             }
             else if let range = operand.range(of: "(") {
                 if !operand.hasSuffix(")") {
-                    throw ConditionError.invalidOperand
+                    throw SwELError.invalidOperand
                 }
                 
                 let functionNameRange = Range<String.Index>(uncheckedBounds: (lower: operand.startIndex, upper: range.upperBound))
@@ -594,7 +610,7 @@ open class SwEL {
                 let endIndex = operand.index(operand.endIndex, offsetBy: -2)
                 let functionParameters = operand[range.upperBound...endIndex]
                 
-                if let function = ConditionFunction(rawValue: functionName) {
+                if let function = ExpressionFunction(rawValue: functionName) {
                     switch function {
                     case .intFunction:
                         return try Int(calculateExpression(functionParameters))
@@ -628,14 +644,14 @@ open class SwEL {
                     }
                 }
                 else {
-                    throw ConditionError.invalidFunction
+                    throw SwELError.invalidFunction
                 }
             }
             else {
                 if let variable = variables?[operand] {
                     return variable
                 }
-                throw ConditionError.invalidOperand
+                throw SwELError.invalidOperand
             }
         }
     }
@@ -645,7 +661,7 @@ open class SwEL {
         let rightValue = try evaluateOperand(operand: right)
         
         guard type(of: leftValue) == type(of: rightValue) else {
-            throw ConditionError.differentOperandTypes
+            throw SwELError.differentOperandTypes
         }
         
         var equal = false
@@ -661,7 +677,7 @@ open class SwEL {
             equal = compareDouble(left: leftValue as! Double, right: rightValue as! Double, op: op)
             
         default:
-            throw ConditionError.invalidOperandType
+            throw SwELError.invalidOperandType
         }
         
         
@@ -682,7 +698,7 @@ open class SwEL {
             return ConditionLogicOperator(rawValue: condition)!
         }
         else {
-            throw ConditionError.invalidCondition
+            throw SwELError.invalidCondition
         }
     }
 }
