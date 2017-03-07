@@ -438,32 +438,34 @@ extension String {
                     let endIndex = operand.index(operand.endIndex, offsetBy: -2)
                     let functionParameters = operand[range.upperBound...endIndex]
                     
-                    switch functionName {
-                    case ConditionFunction.intFunction.rawValue:
-                        return try Int(calculateExpression(functionParameters))
-
-                    case ConditionFunction.doubleFunction.rawValue:
-                        return try calculateExpression(functionParameters)
-                        
-                    case ConditionFunction.searchFunction.rawValue:
-                        let parameters = getStringParameters(buffer: functionParameters)
-                        
-                        guard parameters.count == 2 else {
-                            throw ConditionError.wrongNumberParametersToFunction
+                    if let function = ConditionFunction(rawValue: functionName) {
+                        switch function {
+                        case .intFunction:
+                            return try Int(calculateExpression(functionParameters))
+                            
+                        case .doubleFunction:
+                            return try calculateExpression(functionParameters)
+                            
+                        case .searchFunction:
+                            let parameters = getStringParameters(buffer: functionParameters)
+                            
+                            guard parameters.count == 2 else {
+                                throw ConditionError.wrongNumberParametersToFunction
+                            }
+                            
+                            return search(text: parameters[0], regexp: parameters[1])
+                            
+                        case .substringFunction:
+                            let parameters = getStringParameters(buffer: functionParameters)
+                            
+                            guard parameters.count == 2 else {
+                                throw ConditionError.wrongNumberParametersToFunction
+                            }
+                            
+                            return substring(text: parameters[0], regexp: parameters[1])
                         }
-                        
-                        return search(text: parameters[0], regexp: parameters[1])
-
-                    case ConditionFunction.substringFunction.rawValue:
-                        let parameters = getStringParameters(buffer: functionParameters)
-                        
-                        guard parameters.count == 2 else {
-                            throw ConditionError.wrongNumberParametersToFunction
-                        }
-                        
-                        return substring(text: parameters[0], regexp: parameters[1])
-
-                    default:
+                    }
+                    else {
                         throw ConditionError.invalidFunction
                     }
                 }
