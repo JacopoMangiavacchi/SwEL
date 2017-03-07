@@ -83,8 +83,12 @@ fileprivate enum ConditionLogicOperator : String {
 fileprivate enum ConditionFunction : String {
     case intFunction = "Int("
     case doubleFunction = "Double("
-    case searchFunction = "Search("         // Search("text", "regex")
-    case substringFunction = "Substring("   // Substring("text", "regex")
+    case searchFunction = "Search("                     // Search("text", "regex")
+    case searchUpperFunction = "SearchUpper("           // SearchUpper("text", "regex")
+    case searchLowerFunction = "SearchLower("           // SearchLower("text", "regex")
+    case substringFunction = "Substring("               // Substring("text", "regex")
+    case substringUpperFunction = "SubstringUpper("     // SubstringUpper("text", "regex")
+    case substringLowerFunction = "SubstringLower("     // SubstringLower("text", "regex")
 }
 
 fileprivate enum ConditionStatus {
@@ -400,6 +404,16 @@ extension String {
             return parameters
         }
         
+        func getExactNumberOfStringParameters(number: Int, buffer: String) throws -> [String] {
+            let parameters = getStringParameters(buffer: buffer)
+            
+            guard parameters.count == number else {
+                throw ConditionError.wrongNumberParametersToFunction
+            }
+        
+            return parameters
+        }
+        
         
         func evaluateOperand(operand: String) throws -> Any {
             guard !operand.isEmpty else {
@@ -447,22 +461,28 @@ extension String {
                             return try calculateExpression(functionParameters)
                             
                         case .searchFunction:
-                            let parameters = getStringParameters(buffer: functionParameters)
-                            
-                            guard parameters.count == 2 else {
-                                throw ConditionError.wrongNumberParametersToFunction
-                            }
-                            
+                            let parameters = try getExactNumberOfStringParameters(number: 2, buffer: functionParameters)
                             return search(text: parameters[0], regexp: parameters[1])
                             
+                        case .searchUpperFunction:
+                            let parameters = try getExactNumberOfStringParameters(number: 2, buffer: functionParameters)
+                            return searchUpperCase(text: parameters[0], regexp: parameters[1])
+                            
+                        case .searchLowerFunction:
+                            let parameters = try getExactNumberOfStringParameters(number: 2, buffer: functionParameters)
+                            return searchLowerCase(text: parameters[0], regexp: parameters[1])
+                            
                         case .substringFunction:
-                            let parameters = getStringParameters(buffer: functionParameters)
-                            
-                            guard parameters.count == 2 else {
-                                throw ConditionError.wrongNumberParametersToFunction
-                            }
-                            
+                            let parameters = try getExactNumberOfStringParameters(number: 2, buffer: functionParameters)
                             return substring(text: parameters[0], regexp: parameters[1])
+
+                        case .substringUpperFunction:
+                            let parameters = try getExactNumberOfStringParameters(number: 2, buffer: functionParameters)
+                            return substringUpperCase(text: parameters[0], regexp: parameters[1])
+
+                        case .substringLowerFunction:
+                            let parameters = try getExactNumberOfStringParameters(number: 2, buffer: functionParameters)
+                            return substringLowerCase(text: parameters[0], regexp: parameters[1])
                         }
                     }
                     else {
