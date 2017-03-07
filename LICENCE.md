@@ -1,4 +1,4 @@
-SwiftExpressionLanguage
+SwEL (Swift Expression Language)
 
 Copyright (c) 2017 Jacopo Mangiavacchi
 

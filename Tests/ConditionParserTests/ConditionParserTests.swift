@@ -1,10 +1,10 @@
 import XCTest
-@testable import SwiftExpressionLanguage
+@testable import SwEL
 
 class ConditionParserTests: XCTestCase {
     func testExample1() {
         let condition = "(1 == 2 || 2 < 4) && 'test' != 'ko'"
-        let exp = SwiftExpressionLanguage(condition)
+        let exp = SwEL(condition)
 
         XCTAssertEqual(try exp.checkCondition(), true)
     }
