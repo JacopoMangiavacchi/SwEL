@@ -37,16 +37,36 @@ Or you can pass a Dictionary of parameters to bind directly to the condition lik
 
 The String extension checkCondition(), or checkCondition(withVariables:), will return a Bool value with the result of the evaluation if this is formally correct.  It will throws different exceptions according to diffferent syntax error in the string value or variables dictionary.
 
+## Evaluating String expressions with RegExp inside the AND/OR conditions
+The following string regex functions could be used on both left and right operand of any conditions
+
+	Search(string, regexp)  			// return -1 if not found
+	SearchUpper(string, regexp)  		// return -1 if not found
+	SearchLower(string, regexp)  		// return -1 if not found
+	
+	Substring(string, regexp)  			// return "" if not found
+	SubstringUpper(string, regexp)  	// return "" if not found
+	SubstringLower(string, regexp)  	// return "" if not found
+
+Here is an example of a complex condition evaluation containing complex expression with string functions:
+
+	let text = "This is a test for testing regexp"
+	let condition = "Substring(\"\(text)\", regex) == result"
+	try! condition.checkCondition(withVariables: ["regex" : "test|tost",  "result" : "test"])
+
 
 ## Evaluating mathematic expressions inside the AND/OR conditions
 
-Mathematic expressions could be used on both left and right operand of any conditions using the syntax Int() or Double()
+Mathematic expressions could be used on both left and right operand of any conditions using the following functions:
+
+	Int(expr)							// evaluate the math expr and return a Int value
+	Double(expr)						// evaluate the math expr and return a Double value
 
 For example this is a condition containing some basic arithmetic operations:
 
 	let condition = "(var1 == 2.0 || Double(var2) > Double(var1 + 0.5)) && 'test' != 'ko'"
 
-More complex mathematic expressions could be used with the help of the following functions:
+Inside the expr passed to Int() or Double() functions more complex mathematic expressions could be used with the help of the following functions:
 
 	sqrt(x)
 	floor(x)
@@ -72,25 +92,16 @@ Here is an example of a complex condition evaluation containing complex expressi
 	try! condition.checkCondition(withVariables: ["var1" : 1.5, "var2" : 2, "var3" : "error"])
 
 
-## Evaluating string expressions inside the AND/OR conditions
-The following string regex function could be used on both left and right operand of any conditions
-
-	Search(string, regexp)  			// return -1 if not found
-	SearchUpper(string, regexp)  		// return -1 if not found
-	SearchLower(string, regexp)  		// return -1 if not found
-	
-	Substring(string, regexp)  			// return "" if not found
-	SubstringUpper(string, regexp)  	// return "" if not found
-	SubstringLower(string, regexp)  	// return "" if not found
-
-Here is an example of a complex condition evaluation containing complex expression with string functions:
-
-	let text = "This is a test for testing regexp"
-	let condition = "Substring(\"\(text)\", regex) == result"
-	try! condition.checkCondition(withVariables: ["regex" : "test|tost",  "result" : "test"])
-
 ## SwEL usage for advanced use case
-TODO
+The SwEL Swift class could be used instead of the provided String Extension in the following way
+
+	let exp = SwEL("Search(string, regexp) >= 0", 
+	               variables: [
+					   "string" : "jacopo@me.com", 
+					   "regexp" : "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}"
+					])
+    try exp.checkCondition()
+
 
 ## Contributing to SwEL
 
