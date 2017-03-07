@@ -78,6 +78,7 @@ The following string regex function could be used on both left and right operand
 	Search(string, regexp)  			// return -1 if not found
 	SearchUpper(string, regexp)  		// return -1 if not found
 	SearchLower(string, regexp)  		// return -1 if not found
+	
 	Substring(string, regexp)  			// return "" if not found
 	SubstringUpper(string, regexp)  	// return "" if not found
 	SubstringLower(string, regexp)  	// return "" if not found

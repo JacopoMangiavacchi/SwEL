@@ -47,7 +47,7 @@ extension String {
     /// - Throws: ConditionError if condition string is not well formed (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
     public func checkCondition(withVariables variables: [String : Any]? = nil) throws -> Bool {
-        let exp = SwiftExpressionLanguage(self, variables: variables)
+        let exp = SwEL(self, variables: variables)
         
         return try exp.checkCondition()
     }
