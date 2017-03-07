@@ -47,6 +47,7 @@ import Foundation
 /// - differentOperandTypes: the condition is comparing two operand of different type (Int, Double or String)
 /// - invalidOperandType: operand type different than Int, Double or String
 /// - invalidCondition: condition is different than && or ||
+/// - wrongNumberParametersToFunction: an expression function has been called with wrong number of parameters
 ///
 public enum ConditionError : Error {
     case invalidSyntax
@@ -56,6 +57,7 @@ public enum ConditionError : Error {
     case differentOperandTypes
     case invalidOperandType
     case invalidCondition
+    case wrongNumberParametersToFunction
 }
 
 fileprivate enum ConditionOperator : String {
@@ -332,57 +334,72 @@ extension String {
             if let range = text.range(of:regexp, options: .regularExpression) {
                 return text.distance(from: text.startIndex, to: range.lowerBound)
             }
-
+            
             return -1
         }
-
+        
         func searchUpperCase(text: String, regexp: String) -> Int {
             return search(text: text.uppercased(), regexp: regexp)
         }
-
+        
         func searchLowerCase(text: String, regexp: String) -> Int {
             return search(text: text.lowercased(), regexp: regexp)
         }
-
+        
         func substring(text: String, regexp: String) -> String {
             if let range = text.range(of:regexp, options: .regularExpression) {
                 return text.substring(with:range)
             }
-
+            
             return ""
         }
-
+        
         func substringUpperCase(text: String, regexp: String) -> String {
             return substring(text: text.uppercased(), regexp: regexp)
         }
-
+        
         func substringLowerCase(text: String, regexp: String) -> String {
             return substring(text: text.lowercased(), regexp: regexp)
         }
-
+        
         func substring(text: String, from: Int, to: Int) -> String {
-
+            
             return ""
         }
-
+        
         func substringUpperCase(text: String, from: Int, to: Int) -> String {
             return substring(text: text.uppercased(), from: from, to: to)
         }
-
+        
         func substringLowerCase(text: String, from: Int, to: Int) -> String {
             return substring(text: text.lowercased(), from: from, to: to)
         }
+        
+        func getStringParameters(buffer: String) -> [String] {
+            var parameters = buffer.components(separatedBy: ",")
 
-        func getParameters(buffer: String) -> [String] {
-            //split
-            //remove " or '
-
-            let parameters = ["1", "2"]
-
+            for i in 0..<parameters.count {
+                var parameter = parameters[i]
+                
+                parameter = parameter.trimmingCharacters(in: CharacterSet.whitespaces)
+                
+                if parameter.hasPrefix("'") && parameter.hasSuffix("'") {
+                    parameter = parameter.replacingOccurrences(of: "'", with: "")
+                }
+                else if parameter.hasPrefix("\"") && parameter.hasSuffix("\"") {
+                    parameter = parameter.replacingOccurrences(of: "\"", with: "")
+                }
+                else if let variable = variables?[parameter] as? String {
+                    parameter = variable
+                }
+                
+                parameters[i] = parameter
+            }
+            
             return parameters
         }
-
-
+        
+        
         func evaluateOperand(operand: String) throws -> Any {
             guard !operand.isEmpty else {
                 throw ConditionError.invalidOperand
@@ -437,8 +454,12 @@ extension String {
                     let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.searchFunction.rawValue.characters.count)
                     let endIndex = operand.index(operand.endIndex, offsetBy: -2)
                     
-                    let parameters = getParameters(buffer: operand[startIndex...endIndex])
-
+                    let parameters = getStringParameters(buffer: operand[startIndex...endIndex])
+                    
+                    guard parameters.count == 2 else {
+                        throw ConditionError.wrongNumberParametersToFunction
+                    }
+                    
                     return search(text: parameters[0], regexp: parameters[1])
                 }
                 else if operand.hasPrefix(ConditionFunction.substringFunction.rawValue) {
@@ -449,8 +470,12 @@ extension String {
                     let startIndex = operand.index(operand.startIndex, offsetBy: ConditionFunction.substringFunction.rawValue.characters.count)
                     let endIndex = operand.index(operand.endIndex, offsetBy: -2)
                     
-                    let parameters = getParameters(buffer: operand[startIndex...endIndex])
-
+                    let parameters = getStringParameters(buffer: operand[startIndex...endIndex])
+                    
+                    guard parameters.count == 2 else {
+                        throw ConditionError.wrongNumberParametersToFunction
+                    }
+                    
                     return substring(text: parameters[0], regexp: parameters[1])
                 }
                 else {
