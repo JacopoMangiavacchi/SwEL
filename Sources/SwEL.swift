@@ -38,7 +38,7 @@
 
 import Foundation
 
-/// SwELError is throwed by *checkCondition()* if the condition string is not well formed
+/// SwELError is throwed by *checkCondition()* or *evalExpression()* if the expression string is not well formed
 ///
 /// - invalidSyntax: generic error
 /// - unclosedBracket: a round bracket has been opened but not closed
@@ -122,18 +122,18 @@ private extension Dictionary {
 /// Check complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters from any String at runtime
 /// Evaluate complex expression with dynamic bindings to parameters from any String at runtime
 ///
-///     *Condition example*: 
-///                 let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
-///                 let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
-///                 let exp = SwEL(condition, variables: variables)
-///                 try exp.checkCondition() // return true
+///     Condition example: 
+///         let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
+///         let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
+///         let exp = SwEL(condition, variables: variables)
+///         try exp.checkCondition() // return true
 ///
-///     *Expression example*: 
-///                 let expression = "result = int(var1 + var2)"
-///                 let variables:[String : Any] = ["var1" : 2, "var2" : 3]
-///                 let exp = SwEL(expression, variables: variables)
-///                 try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
-///                 //exp.variables["result"] == 5
+///     Expression example: 
+///         let expression = "result = int(var1 + var2)"
+///         let variables:[String : Any] = ["var1" : 2, "var2" : 3]
+///         let exp = SwEL(expression, variables: variables)
+///         try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
+///         //exp.variables["result"] == 5
 ///
 open class SwEL {
     public var expression: String
@@ -156,18 +156,18 @@ open class SwEL {
     
     /// *init()* initialize the *expression* and *variables* properties used by the *checkCondition()* method
     ///
-    ///     *Condition example*: 
-    ///                 let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
-    ///                 let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
-    ///                 let exp = SwEL(condition, variables: variables)
-    ///                 try exp.checkCondition() //return true
+    ///     Condition example: 
+    ///         let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
+    ///         let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
+    ///         let exp = SwEL(condition, variables: variables)
+    ///         try exp.checkCondition() //return true
     ///
-    ///     *Expression example*: 
-    ///                 let expression = "result = int(var1 + var2)"
-    ///                 let variables:[String : Any] = ["var1" : 2, "var2" : 3]
-    ///                 let exp = SwEL(expression, variables: variables)
-    ///                 try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
-    ///                 //exp.variables["result"] == 5
+    ///     Expression example: 
+    ///         let expression = "result = int(var1 + var2)"
+    ///         let variables:[String : Any] = ["var1" : 2, "var2" : 3]
+    ///         let exp = SwEL(expression, variables: variables)
+    ///         try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
+    ///         //exp.variables["result"] == 5
     ///
     /// - Parameter expression: an expression containing for example a condition to be evaluated with the *checkCondition()* metod
     /// - Parameter variables: optional Dictionary of variables to bind values to parameter name in the condition string
@@ -181,11 +181,11 @@ open class SwEL {
     ///
     /// It use public *expression* and *variables* properties passed to the init method
     ///
-    ///     *Condition example*: 
-    ///                 let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
-    ///                 let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
-    ///                 let exp = SwEL(condition, variables: variables)
-    ///                 try exp.checkCondition() //return true
+    ///     Condition example: 
+    ///         let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
+    ///         let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
+    ///         let exp = SwEL(condition, variables: variables)
+    ///         try exp.checkCondition() //return true
     ///
     /// - Returns: A Bool indicating the result of the condition
     ///
@@ -328,18 +328,18 @@ open class SwEL {
     ///
     /// It use public *expression* and *variables* properties passed to the init method
     ///
-    ///     *Expression example (Assignement with Math Functions)*: 
-    ///                 let expression = "result = int(var1 + var2)"
-    ///                 let variables:[String : Any] = ["var1" : 2, "var2" : 3]
-    ///                 let exp = SwEL(expression, variables: variables)
-    ///                 try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
-    ///                 //exp.variables["result"] == 5
+    ///     Expression example (Assignement with Math Functions): 
+    ///         let expression = "result = int(var1 + var2)"
+    ///         let variables:[String : Any] = ["var1" : 2, "var2" : 3]
+    ///         let exp = SwEL(expression, variables: variables)
+    ///         try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
+    ///         //exp.variables["result"] == 5
     ///
-    ///     *Expression example (Evaluation with String Functions)*: 
-    ///                 let expression = "substring('This is a test for testing regexp', regex)"
-    ///                 let variables:[String : Any] = ["regex" : "test|tost"]
-    ///                 let exp = SwEL(expression, variables: variables)
-    ///                 try exp.evalExpression() // return "test"
+    ///     Expression example (Evaluation with String Functions): 
+    ///         let expression = "substring('This is a test for testing regexp', regex)"
+    ///         let variables:[String : Any] = ["regex" : "test|tost"]
+    ///         let exp = SwEL(expression, variables: variables)
+    ///         try exp.evalExpression() // return "test"
     ///
     /// - Returns: Any value - return true if an assignement or the result of the expression (options: Bool, Int, Float, String)
     ///
