@@ -101,8 +101,75 @@ fileprivate enum ConditionStatus {
     case inCondition
 }
 
+fileprivate struct ConditionStatusStruct {
+    var previousCondition = true
+    var status = ConditionStatus.clear
+    var innerCondition = ""
+    var innerBracketCounter = 0
+    var inOperandBracketCounter = 0
+    var condLeftOperand = ""
+    var condRightOperand = ""
+    var condOperator = ""
+    var condition = ""
+    var validOperator:ConditionOperator!
+    
+    mutating func clear() {
+        status = .clear
+        innerCondition = ""
+        innerBracketCounter = 0
+        inOperandBracketCounter = 0
+        condLeftOperand = ""
+        condRightOperand = ""
+        condOperator = ""
+        condition = ""
+    }
+    
+    mutating func openBracket() {
+        status = .inBracketCondition
+        innerCondition = ""
+        innerBracketCounter = 1
+    }
+    
+    mutating func closeBracket() {
+        status = .inCondition
+        innerCondition = ""
+        innerBracketCounter = 0
+    }
+    
+    mutating func getLeftOperand() {
+        status = .inConditionLeftOperand
+        condLeftOperand = ""
+        condRightOperand = ""
+        condOperator = ""
+        inOperandBracketCounter = 0
+    }
+    
+    mutating func getOperator() {
+        status = .inConditionOperator
+        condOperator = ""
+    }
+    
+    mutating func getRightOperand() {
+        status = .inConditionRightOperand
+        condRightOperand = ""
+        inOperandBracketCounter = 0
+    }
+    
+    mutating func closeCondition() {
+        status = .inCondition
+        innerCondition = ""
+        innerBracketCounter = 0
+        inOperandBracketCounter = 0
+        condLeftOperand = ""
+        condRightOperand = ""
+        condOperator = ""
+        condition = ""
+    }
+}
 
-private extension Dictionary {
+
+// Utility Dictionary Extension for transforming the Values of a Dictionary
+fileprivate extension Dictionary {
     func mapDictionary(transform: (Key, Value) -> (Key, Value)?) -> Dictionary<Key, Value> {
         var dict = [Key: Value]()
         for key in keys {
@@ -115,6 +182,7 @@ private extension Dictionary {
         return dict
     }
 }
+
 
 
 /// *SwEL* (Swift Expression Language)
@@ -139,21 +207,7 @@ open class SwEL {
     public var expression: String
     public var variables: [String : Any]?
 
-    private var previousCondition = true
-    
-    private var status = ConditionStatus.clear
-    
-    private var innerCondition = ""
-    private var innerBracketCounter = 0
-    private var inOperandBracketCounter = 0
-    private var condLeftOperand = ""
-    private var condRightOperand = ""
-    private var condOperator = ""
-    private var condition = ""
-    
-    private var validOperator:ConditionOperator!
 
-    
     /// *init()* initialize the *expression* and *variables* properties used by the *checkCondition()* method
     ///
     ///     Condition example: 
@@ -192,135 +246,137 @@ open class SwEL {
     /// - Throws: SwELError if condition in the *expression* property is not well formatted (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
     public func checkCondition() throws -> Bool {
-        clearConditionStatus()
+        var conditionStatus = ConditionStatusStruct()
+
+        conditionStatus.clear()
         for index in expression.characters.indices {
             let lastIndex = (index == expression.characters.indices.index(before: expression.characters.indices.endIndex) ? true : false)
             let value = String(expression[index])
             
-            switch status {
+            switch conditionStatus.status {
             case .clear:
                 if value == ConditionBracket.open.rawValue {
-                    openBracket()
+                    conditionStatus.openBracket()
                 }
                 else if value == " " {
                     //nop
                 }
                 else {
-                    getLeftOperand()
-                    condLeftOperand.append(value)
+                    conditionStatus.getLeftOperand()
+                    conditionStatus.condLeftOperand.append(value)
                 }
                 
             case .inBracketCondition:
                 if value == ConditionBracket.open.rawValue {
-                    innerBracketCounter += 1
-                    innerCondition.append(value)
+                    conditionStatus.innerBracketCounter += 1
+                    conditionStatus.innerCondition.append(value)
                 }
                 else {
                     if value == ConditionBracket.close.rawValue {
-                        innerBracketCounter -= 1
+                        conditionStatus.innerBracketCounter -= 1
                     }
                     
-                    if innerBracketCounter == 0 {
-                        previousCondition = try innerCondition.checkCondition(withVariables: variables)
+                    if conditionStatus.innerBracketCounter == 0 {
+                        conditionStatus.previousCondition = try conditionStatus.innerCondition.checkCondition(withVariables: variables)
                         
-                        closeBracket()
+                        conditionStatus.closeBracket()
                     }
                     else {
-                        innerCondition.append(value)
+                        conditionStatus.innerCondition.append(value)
                     }
                 }
                 
             case .inConditionLeftOperand:
                 if value == ConditionBracket.open.rawValue {
-                    inOperandBracketCounter += 1
+                    conditionStatus.inOperandBracketCounter += 1
                 }
                 if value == ConditionBracket.close.rawValue {
-                    inOperandBracketCounter -= 1
+                    conditionStatus.inOperandBracketCounter -= 1
                 }
                 
-                if value == " " && inOperandBracketCounter == 0 {
-                    getOperator()
+                if value == " " && conditionStatus.inOperandBracketCounter == 0 {
+                    conditionStatus.getOperator()
                 }
                 else {
-                    condLeftOperand.append(value)
+                    conditionStatus.condLeftOperand.append(value)
                 }
                 
             case .inConditionOperator:
                 if value == " " {
-                    if !condOperator.isEmpty {
-                        validOperator = try getValidOperator(condOperator)
-                        getRightOperand()
+                    if !conditionStatus.condOperator.isEmpty {
+                        conditionStatus.validOperator = try getValidOperator(conditionStatus.condOperator)
+                        conditionStatus.getRightOperand()
                     }
                     else {
                         //nop
                     }
                 }
                 else {
-                    condOperator.append(value)
+                    conditionStatus.condOperator.append(value)
                 }
                 
             case .inConditionRightOperand:
                 if value == ConditionBracket.open.rawValue {
-                    inOperandBracketCounter += 1
+                    conditionStatus.inOperandBracketCounter += 1
                 }
                 if value == ConditionBracket.close.rawValue {
-                    inOperandBracketCounter -= 1
+                    conditionStatus.inOperandBracketCounter -= 1
                 }
                 
-                if (value == " " && inOperandBracketCounter == 0) || lastIndex {
+                if (value == " " && conditionStatus.inOperandBracketCounter == 0) || lastIndex {
                     if value != " " && lastIndex {
-                        condRightOperand.append(value)
+                        conditionStatus.condRightOperand.append(value)
                     }
                     
-                    if !condRightOperand.isEmpty {
-                        previousCondition = try evaluateCondition(left: condLeftOperand, op: validOperator, right: condRightOperand)
-                        closeCondition()
+                    if !conditionStatus.condRightOperand.isEmpty {
+                        conditionStatus.previousCondition = try evaluateCondition(left: conditionStatus.condLeftOperand, op: conditionStatus.validOperator, right: conditionStatus.condRightOperand)
+                        conditionStatus.closeCondition()
                     }
                     else {
                         //nop
                     }
                 }
                 else {
-                    condRightOperand.append(value)
+                    conditionStatus.condRightOperand.append(value)
                 }
                 
             case .inCondition:
                 if value == " "  || lastIndex {
                     if value != " " && lastIndex {
-                        condition.append(value)
+                        conditionStatus.condition.append(value)
                     }
                     
-                    if !condition.isEmpty {
-                        let realCondition = try evaluateCondition(condition: condition)
+                    if !conditionStatus.condition.isEmpty {
+                        let realCondition = try evaluateCondition(condition: conditionStatus.condition)
                         
-                        if realCondition == .and && !previousCondition {
+                        if realCondition == .and && !conditionStatus.previousCondition {
                             return false
                         }
-                        if realCondition == .or && previousCondition {
+                        if realCondition == .or && conditionStatus.previousCondition {
                             return true
                         }
                         
-                        clearConditionStatus()
+                        conditionStatus.clear()
                     }
                     else {
                         //nop
                     }
                 }
                 else {
-                    condition.append(value)
+                    conditionStatus.condition.append(value)
                 }
             }
         }
         
-        if status != .inCondition || !condition.isEmpty {
-            if status == .inBracketCondition {
+        if conditionStatus.status != .inCondition || !conditionStatus.condition.isEmpty {
+            if conditionStatus.status == .inBracketCondition {
                 throw SwELError.unclosedBracket
             }
             
             throw SwELError.invalidSyntax
         }
         
-        return previousCondition
+        return conditionStatus.previousCondition
     }
     
 
@@ -355,63 +411,9 @@ open class SwEL {
 
         return false
     }
-
-
-    //PRIVATE FUNCs
-
-    private func clearConditionStatus() {
-        status = .clear
-        innerCondition = ""
-        innerBracketCounter = 0
-        inOperandBracketCounter = 0
-        condLeftOperand = ""
-        condRightOperand = ""
-        condOperator = ""
-        condition = ""
-    }
     
-    private func openBracket() {
-        status = .inBracketCondition
-        innerCondition = ""
-        innerBracketCounter = 1
-    }
     
-    private func closeBracket() {
-        status = .inCondition
-        innerCondition = ""
-        innerBracketCounter = 0
-    }
-    
-    private func getLeftOperand() {
-        status = .inConditionLeftOperand
-        condLeftOperand = ""
-        condRightOperand = ""
-        condOperator = ""
-        inOperandBracketCounter = 0
-    }
-    
-    private func getOperator() {
-        status = .inConditionOperator
-        condOperator = ""
-    }
-    
-    private func getRightOperand() {
-        status = .inConditionRightOperand
-        condRightOperand = ""
-        inOperandBracketCounter = 0
-    }
-    
-    private func closeCondition() {
-        status = .inCondition
-        innerCondition = ""
-        innerBracketCounter = 0
-        inOperandBracketCounter = 0
-        condLeftOperand = ""
-        condRightOperand = ""
-        condOperator = ""
-        condition = ""
-    }
-    
+    // Utility Funcs
     private func iterateEnum<T: Hashable>(_: T.Type) -> AnyIterator<T> {
         var i = 0
         return AnyIterator {
@@ -422,6 +424,8 @@ open class SwEL {
         }
     }
     
+    
+    // Private Funcs
     private func getValidOperator(_ op: String) throws -> ConditionOperator {
         var valid = false
         
@@ -752,3 +756,4 @@ open class SwEL {
         }
     }
 }
+
