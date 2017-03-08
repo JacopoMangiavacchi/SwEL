@@ -2,7 +2,7 @@
 //
 //  SwEL.swift
 //
-//  Version 0.3
+//  Version 0.4
 //
 //  Created by Jacopo Mangiavacchi on 25/02/2017.
 //  Copyright © 2017 Jacopo Mangiavacchi. All rights reserved.
@@ -119,13 +119,21 @@ extension Dictionary {
 
 /// *SwEL* (Swift Expression Language)
 ///
-/// Evaluate complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters from any String at runtime
+/// Check complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters from any String at runtime
+/// Evaluate complex expression with dynamic bindings to parameters from any String at runtime
 ///
-///     *example*: 
+///     *Condition example*: 
 ///                 let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
 ///                 let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
-///                 let exp = SwEL(condition)
-///                 try exp.checkCondition()
+///                 let exp = SwEL(condition, variables: variables)
+///                 try exp.checkCondition() // return true
+///
+///     *Expression example*: 
+///                 let expression = "result = int(var1 + var2)"
+///                 let variables:[String : Any] = ["var1" : 2, "var2" : 3]
+///                 let exp = SwEL(expression, variables: variables)
+///                 try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
+///                 //exp.variables["result"] == 5
 ///
 open class SwEL {
     public var expression: String
@@ -147,11 +155,19 @@ open class SwEL {
 
     
     /// *init()* initialize the *expression* and *variables* properties used by the *checkCondition()* method
-    ///     *example*: 
+    ///
+    ///     *Condition example*: 
     ///                 let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
     ///                 let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
-    ///                 let exp = SwEL(condition)
-    ///                 try exp.checkCondition()
+    ///                 let exp = SwEL(condition, variables: variables)
+    ///                 try exp.checkCondition() //return true
+    ///
+    ///     *Expression example*: 
+    ///                 let expression = "result = int(var1 + var2)"
+    ///                 let variables:[String : Any] = ["var1" : 2, "var2" : 3]
+    ///                 let exp = SwEL(expression, variables: variables)
+    ///                 try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
+    ///                 //exp.variables["result"] == 5
     ///
     /// - Parameter expression: an expression containing for example a condition to be evaluated with the *checkCondition()* metod
     /// - Parameter variables: optional Dictionary of variables to bind values to parameter name in the condition string
@@ -161,17 +177,22 @@ open class SwEL {
         self.variables = variables
     }
     
-    /// *checkCondition()* evaluate complex conditions with AND/OR, infinite level of brackets and dynamic
-    /// bindings to parameters from any String at runtime
+    /// *checkCondition()* evaluate complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters at runtime
     ///
-    /// It use public *expression* and *variables* properties
+    /// It use public *expression* and *variables* properties passed to the init method
+    ///
+    ///     *Condition example*: 
+    ///                 let condition = "(var1 == 2 || 2 < 4) && 'test' != var2"
+    ///                 let variables:[String : Any] = ["var1" : 2, "var2" : "ko"]
+    ///                 let exp = SwEL(condition, variables: variables)
+    ///                 try exp.checkCondition() //return true
     ///
     /// - Returns: A Bool indicating the result of the condition
     ///
-    /// - Throws: SwELError if condition in the *expression* property is not well formed (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
+    /// - Throws: SwELError if condition in the *expression* property is not well formatted (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
     public func checkCondition() throws -> Bool {
-        clear()
+        clearConditionStatus()
         for index in expression.characters.indices {
             let lastIndex = (index == expression.characters.indices.index(before: expression.characters.indices.endIndex) ? true : false)
             let value = String(expression[index])
@@ -279,7 +300,7 @@ open class SwEL {
                             return true
                         }
                         
-                        clear()
+                        clearConditionStatus()
                     }
                     else {
                         //nop
@@ -302,9 +323,43 @@ open class SwEL {
         return previousCondition
     }
     
-    
+
+    /// *evalExpression()* evaluate complex expression with dynamic bindings to parameters from any String at runtime
+    ///
+    /// It use public *expression* and *variables* properties passed to the init method
+    ///
+    ///     *Expression example (Assignement with Math Functions)*: 
+    ///                 let expression = "result = int(var1 + var2)"
+    ///                 let variables:[String : Any] = ["var1" : 2, "var2" : 3]
+    ///                 let exp = SwEL(expression, variables: variables)
+    ///                 try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
+    ///                 //exp.variables["result"] == 5
+    ///
+    ///     *Expression example (Evaluation with String Functions)*: 
+    ///                 let expression = "substring('This is a test for testing regexp', regex)"
+    ///                 let variables:[String : Any] = ["regex" : "test|tost"]
+    ///                 let exp = SwEL(expression, variables: variables)
+    ///                 try exp.evalExpression() // return "test"
+    ///
+    /// - Returns: A Bool indicating the result of the condition
+    ///
+    /// - Throws: SwELError if condition in the *expression* property is not well formatted (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
+    ///
+    public func evalExpression() throws -> Any {
+        for index in expression.characters.indices {
+            let lastIndex = (index == expression.characters.indices.index(before: expression.characters.indices.endIndex) ? true : false)
+            let value = String(expression[index])
+
+            print("\(value) - \(lastIndex)")
+        }
+
+        return false
+    }
+
+
     //PRIVATE FUNCs
-    private func clear() {
+
+    private func clearConditionStatus() {
         status = .clear
         innerCondition = ""
         innerBracketCounter = 0
@@ -666,20 +721,33 @@ open class SwEL {
         
         var equal = false
         
-        switch "\(type(of: leftValue))" {
-        case "Int":
+        // switch "\(type(of: leftValue))" {
+        // case "Int":
+        //     equal = compareInt(left: leftValue as! Int, right: rightValue as! Int, op: op)
+            
+        // case "String":
+        //     equal = compareString(left: leftValue as! String, right: rightValue as! String, op: op)
+            
+        // case "Double":
+        //     equal = compareDouble(left: leftValue as! Double, right: rightValue as! Double, op: op)
+            
+        // default:
+        //     throw SwELError.invalidOperandType
+        // }
+
+        switch leftValue {
+        case is Int:
             equal = compareInt(left: leftValue as! Int, right: rightValue as! Int, op: op)
             
-        case "String":
+        case is String:
             equal = compareString(left: leftValue as! String, right: rightValue as! String, op: op)
             
-        case "Double":
+        case is Double:
             equal = compareDouble(left: leftValue as! Double, right: rightValue as! Double, op: op)
             
         default:
             throw SwELError.invalidOperandType
         }
-        
         
         return equal
     }

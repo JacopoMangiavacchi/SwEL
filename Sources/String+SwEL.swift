@@ -2,7 +2,7 @@
 //
 //  String+SwEL.swift
 //
-//  Version 0.3
+//  Version 0.4
 //
 //  Created by Jacopo Mangiavacchi on 25/02/2017.
 //  Copyright © 2017 Jacopo Mangiavacchi. All rights reserved.
@@ -36,9 +36,9 @@ extension String {
     /// *checkCondition()* evaluate complex conditions with AND/OR, infinite level of brackets and dynamic
     /// bindings to parameters from any String at runtime
     ///
-    /// *example 1*:  try! "(1 == 2 || 2 < 4) && 'test' != 'ko'".checkCondition()
+    ///     *example 1*:  try! "(1 == 2 || int(1 + 1) < 4) && 'test' != 'ko'".checkCondition()
     ///
-    /// *example 2*:  try! "var1 == var2".checkCondition(withVariables: ["var1" : 1, "var2" : 2])
+    ///     *example 2*:  try! "var1 > float(var2 * 2)".checkCondition(withVariables: ["var1" : 4.0, "var2" : 1.5])
     ///
     /// - Parameter variables: optional Dictionary of variables to bind values to parameter name in the condition string
     ///
