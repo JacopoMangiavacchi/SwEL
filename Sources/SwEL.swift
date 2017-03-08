@@ -102,7 +102,7 @@ fileprivate enum ConditionStatus {
 }
 
 
-extension Dictionary {
+private extension Dictionary {
     func mapDictionary(transform: (Key, Value) -> (Key, Value)?) -> Dictionary<Key, Value> {
         var dict = [Key: Value]()
         for key in keys {
@@ -341,7 +341,7 @@ open class SwEL {
     ///                 let exp = SwEL(expression, variables: variables)
     ///                 try exp.evalExpression() // return "test"
     ///
-    /// - Returns: A Bool indicating the result of the condition
+    /// - Returns: Any value - return true if an assignement or the result of the expression (options: Bool, Int, Float, String)
     ///
     /// - Throws: SwELError if condition in the *expression* property is not well formatted (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
@@ -553,7 +553,7 @@ open class SwEL {
             return text.distance(from: text.startIndex, to: range.lowerBound)
         }
         
-        return -1
+        return -1 //not found
     }
     
     private func searchUpperCase(text: String, regexp: String) -> Int {
@@ -569,7 +569,7 @@ open class SwEL {
             return text.substring(with:range)
         }
         
-        return ""
+        return "" //not found
     }
     
     private func substringUpperCase(text: String, regexp: String) -> String {
@@ -582,7 +582,7 @@ open class SwEL {
     
     private func substring(text: String, from: Int, to: Int) -> String {
         
-        return ""
+        return "" //TODO: implement and export as substringPos function in ExpressionFunction
     }
     
     private func substringUpperCase(text: String, from: Int, to: Int) -> String {
@@ -719,37 +719,19 @@ open class SwEL {
             throw SwELError.differentOperandTypes
         }
         
-        var equal = false
-        
-        // switch "\(type(of: leftValue))" {
-        // case "Int":
-        //     equal = compareInt(left: leftValue as! Int, right: rightValue as! Int, op: op)
-            
-        // case "String":
-        //     equal = compareString(left: leftValue as! String, right: rightValue as! String, op: op)
-            
-        // case "Double":
-        //     equal = compareDouble(left: leftValue as! Double, right: rightValue as! Double, op: op)
-            
-        // default:
-        //     throw SwELError.invalidOperandType
-        // }
-
         switch leftValue {
         case is Int:
-            equal = compareInt(left: leftValue as! Int, right: rightValue as! Int, op: op)
+            return compareInt(left: leftValue as! Int, right: rightValue as! Int, op: op)
             
         case is String:
-            equal = compareString(left: leftValue as! String, right: rightValue as! String, op: op)
+            return compareString(left: leftValue as! String, right: rightValue as! String, op: op)
             
         case is Double:
-            equal = compareDouble(left: leftValue as! Double, right: rightValue as! Double, op: op)
+            return compareDouble(left: leftValue as! Double, right: rightValue as! Double, op: op)
             
         default:
             throw SwELError.invalidOperandType
         }
-        
-        return equal
     }
     
     private func evaluateCondition(condition: String) throws -> ConditionLogicOperator {
