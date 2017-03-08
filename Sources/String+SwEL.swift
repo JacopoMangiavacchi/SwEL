@@ -76,7 +76,7 @@ extension String {
     /// - Throws: ConditionError if condition string is not well formatted (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
     public func evalExpression(withVariables variables: inout [String : Any]) throws -> Any {
-        let exp = SwEL(self, variables: variables)
+        var exp = SwEL(self, variables: variables)
 
         let result = try exp.evalExpression()
         if let resultVariables = exp.variables {

@@ -203,7 +203,7 @@ fileprivate extension Dictionary {
 ///         try exp.evalExpression() // return true and insert ("result" : 5) in the SwEL.variables Dictionary properties
 ///         //exp.variables["result"] == 5
 ///
-open class SwEL {
+public struct SwEL {
     public var expression: String
     public var variables: [String : Any]?
 
@@ -401,7 +401,7 @@ open class SwEL {
     ///
     /// - Throws: SwELError if condition in the *expression* property is not well formatted (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
-    public func evalExpression() throws -> Any {
+    public mutating func evalExpression() throws -> Any {
         for index in expression.characters.indices {
             let lastIndex = (index == expression.characters.indices.index(before: expression.characters.indices.endIndex) ? true : false)
             let value = String(expression[index])
