@@ -79,9 +79,7 @@ extension String {
         var exp = SwEL(self, variables: variables)
 
         let result = try exp.evalExpression()
-        if let resultVariables = exp.variables {
-            variables = resultVariables
-        }
+        variables = exp.variables
 
         return result
     }

@@ -257,7 +257,7 @@ fileprivate extension Dictionary {
 ///
 public struct SwEL {
     public var expression: String
-    public var variables: [String : Any]?
+    public var variables: [String : Any]
 
 
     /// *init()* initialize the *expression* and *variables* properties used by the *checkCondition()* method
@@ -280,7 +280,7 @@ public struct SwEL {
     ///
     public init(_ expression: String, variables: [String : Any]? = nil) {
         self.expression = expression
-        self.variables = variables
+        self.variables = variables ?? [String : Any]()
     }
     
     /// *checkCondition()* evaluate complex conditions with AND/OR, infinite level of brackets and dynamic bindings to parameters at runtime
@@ -535,6 +535,8 @@ public struct SwEL {
             //it's an assignement
             //“var1 = ‘test’” ->  Bool(true) —— inout parameters[var1] = “test”
             
+            variables[expressionStatus.exprLeftOperand] = try evaluateOperand(operand: expressionStatus.exprRightOperand)
+            
             return true
         }
         
@@ -542,7 +544,7 @@ public struct SwEL {
             //“int(1 +2)” -> Int(3)
             //“‘test’” -> String(“test”)
 
-            return "OK"
+            return try evaluateOperand(operand: expressionStatus.exprLeftOperand)
         }
         
         throw SwELError.invalidSyntax
@@ -693,7 +695,7 @@ public struct SwEL {
     
     private func calculateExpression(_ expression: String) throws -> Double {
         //Convert Dictionary variables: [String : Any]?  ==>  constants: [String: Double]?
-        let constants: [String: Double]? = variables?.mapDictionary { (k,v) in
+        let constants: [String: Double]? = variables.mapDictionary { (k,v) in
             if let d = v as? Double {
                 return (k, d)
             }
@@ -701,7 +703,7 @@ public struct SwEL {
                 return (k, Double(i))
             }
             return nil
-            } as! [String : Double]?
+            } as? [String : Double]
         
         return try Expression(expression, constants: constants).evaluate()
     }
@@ -765,7 +767,7 @@ public struct SwEL {
             else if parameter.hasPrefix("\"") && parameter.hasSuffix("\"") {
                 parameter = parameter.replacingOccurrences(of: "\"", with: "")
             }
-            else if let variable = variables?[parameter] as? String {
+            else if let variable = variables[parameter] as? String {
                 parameter = variable
             }
             
@@ -861,7 +863,7 @@ public struct SwEL {
                 }
             }
             else {
-                if let variable = variables?[operand] {
+                if let variable = variables[operand] {
                     return variable
                 }
                 throw SwELError.invalidOperand
