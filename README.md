@@ -6,6 +6,18 @@
 
 # SwEL (Swift Expression Language)
 
+Do you need in your iOS, macOS, Linux projects to execute at runtime complex string based expression or condition evaluation like the string below ?
+
+	"((var1 > var2 && var3 > int(max(var4, var5) * 1000)) || search(message, 'OK') >= 0) && errorCode != 400"
+
+SwEL is a Swift String Extension and a Swift Struct exposing very simple API to evaluate String based Expressions and Conditions at runtime using two very simple methods:
+
+1. evalExpression()  or  evalExpression(withVariables:)
+2. checkCondition()  or  checkCondition(withVariables:)
+
+
+# Introduction
+
 SwEL (Swift Expression Language) is a Swift 3.x package for macOS, iOS and Linux for evaluating complex Conditions and Expressions at runtime from any Swift String.
 
 Expression could be String RegEx based operations like for example "substring('this is a test', 'test|tost')" or mathematical expressions.
@@ -41,12 +53,12 @@ It's super easy, you can call evalExpression() on any Swift String
 
 Or you can pass a Dictionary of parameters to bind directly to the expression like this
 
-	try "substring(string, regex)".checkCondition(withVariables: [
+	try "substring(string, regex)".evalExpression(withVariables: [
 		"string" : "this is a test",
 		"regex" : "test|tost"
 	])
 
-	try "int(var1 + var2)".checkCondition(withVariables: [
+	try "int(var1 + var2)".evalExpression(withVariables: [
 		"var1" : 3,
 		"var2" : 4
 	])
