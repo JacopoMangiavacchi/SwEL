@@ -42,7 +42,7 @@ import Foundation
 ///
 /// - invalidSyntax: generic error
 /// - unclosedBracket: a round bracket has been opened but not closed
-/// - invalidOperator: operator is different than ==, !=, >, >=, <, <=
+/// - invalidOperator: operator is different than ==, !=, >, >=, <, <= in Condition or = in Expression
 /// - invalidOperand: operand is a string literal beginning with " or ' but not ending with the same symbol
 /// - differentOperandTypes: the condition is comparing two operand of different type (Int, Double or String)
 /// - invalidOperandType: operand type different than Int, Double or String
@@ -71,7 +71,7 @@ fileprivate enum ConditionOperator : String {
     case lessEqual = "<="
 }
 
-fileprivate enum ConditionBracket : String {
+fileprivate enum ExpressionBracket : String {
     case open = "("
     case close = ")"
 }
@@ -102,8 +102,8 @@ fileprivate enum ConditionStatus {
 }
 
 fileprivate struct ConditionStatusStruct {
-    var previousCondition = true
     var status = ConditionStatus.clear
+    var previousCondition = true
     var innerCondition = ""
     var innerBracketCounter = 0
     var inOperandBracketCounter = 0
@@ -164,6 +164,58 @@ fileprivate struct ConditionStatusStruct {
         condRightOperand = ""
         condOperator = ""
         condition = ""
+    }
+}
+
+fileprivate enum ExpressionOperator : String {
+    case assign = "="
+}
+
+fileprivate enum ExpressionStatus {
+    case clear
+    case inExpressionLeftOperand
+    case inExpressionOperator
+    case inExpressionRightOperand
+    case finishedExpression
+}
+
+fileprivate struct ExpressionStatusStruct {
+    var status = ExpressionStatus.clear
+    var exprLeftOperand = ""
+    var exprRightOperand = ""
+    var exprOperator = ""
+    var inOperandBracketCounter = 0
+    var validOperator:ExpressionOperator!
+    
+    mutating func clear() {
+        status = .clear
+        exprLeftOperand = ""
+        exprRightOperand = ""
+        exprOperator = ""
+        inOperandBracketCounter = 0
+    }
+    
+    mutating func getLeftOperand() {
+        status = .inExpressionLeftOperand
+        exprLeftOperand = ""
+        exprRightOperand = ""
+        exprOperator = ""
+        inOperandBracketCounter = 0
+    }
+    
+    mutating func getOperator() {
+        status = .inExpressionOperator
+        exprOperator = ""
+    }
+
+    mutating func getRightOperand() {
+        status = .inExpressionRightOperand
+        exprRightOperand = ""
+        inOperandBracketCounter = 0
+    }
+    
+    mutating func finishExpression() {
+        status = .finishedExpression
     }
 }
 
@@ -255,7 +307,7 @@ public struct SwEL {
             
             switch conditionStatus.status {
             case .clear:
-                if value == ConditionBracket.open.rawValue {
+                if value == ExpressionBracket.open.rawValue {
                     conditionStatus.openBracket()
                 }
                 else if value == " " {
@@ -267,12 +319,12 @@ public struct SwEL {
                 }
                 
             case .inBracketCondition:
-                if value == ConditionBracket.open.rawValue {
+                if value == ExpressionBracket.open.rawValue {
                     conditionStatus.innerBracketCounter += 1
                     conditionStatus.innerCondition.append(value)
                 }
                 else {
-                    if value == ConditionBracket.close.rawValue {
+                    if value == ExpressionBracket.close.rawValue {
                         conditionStatus.innerBracketCounter -= 1
                     }
                     
@@ -287,10 +339,10 @@ public struct SwEL {
                 }
                 
             case .inConditionLeftOperand:
-                if value == ConditionBracket.open.rawValue {
+                if value == ExpressionBracket.open.rawValue {
                     conditionStatus.inOperandBracketCounter += 1
                 }
-                if value == ConditionBracket.close.rawValue {
+                if value == ExpressionBracket.close.rawValue {
                     conditionStatus.inOperandBracketCounter -= 1
                 }
                 
@@ -304,7 +356,7 @@ public struct SwEL {
             case .inConditionOperator:
                 if value == " " {
                     if !conditionStatus.condOperator.isEmpty {
-                        conditionStatus.validOperator = try getValidOperator(conditionStatus.condOperator)
+                        conditionStatus.validOperator = try getValidConditionOperator(conditionStatus.condOperator)
                         conditionStatus.getRightOperand()
                     }
                     else {
@@ -316,10 +368,10 @@ public struct SwEL {
                 }
                 
             case .inConditionRightOperand:
-                if value == ConditionBracket.open.rawValue {
+                if value == ExpressionBracket.open.rawValue {
                     conditionStatus.inOperandBracketCounter += 1
                 }
-                if value == ConditionBracket.close.rawValue {
+                if value == ExpressionBracket.close.rawValue {
                     conditionStatus.inOperandBracketCounter -= 1
                 }
                 
@@ -402,14 +454,98 @@ public struct SwEL {
     /// - Throws: SwELError if condition in the *expression* property is not well formatted (i.e. contain wrong number of brackets, wrong operators (==, !=, <, <=, >, >=, wrong conditions (&& or ||) or if comparing different data types (Integer, Double, String)
     ///
     public mutating func evalExpression() throws -> Any {
+        var expressionStatus = ExpressionStatusStruct()
+        
+        expressionStatus.clear()
         for index in expression.characters.indices {
             let lastIndex = (index == expression.characters.indices.index(before: expression.characters.indices.endIndex) ? true : false)
             let value = String(expression[index])
-
-            print("\(value) - \(lastIndex)")
+            
+            switch expressionStatus.status {
+            case .clear:
+                if value == " " {
+                    //nop
+                }
+                else {
+                    expressionStatus.getLeftOperand()
+                    expressionStatus.exprLeftOperand.append(value)
+                }
+                
+            case .inExpressionLeftOperand:
+                if value == ExpressionBracket.open.rawValue {
+                    expressionStatus.inOperandBracketCounter += 1
+                }
+                if value == ExpressionBracket.close.rawValue {
+                    expressionStatus.inOperandBracketCounter -= 1
+                }
+                
+                if value == " " && expressionStatus.inOperandBracketCounter == 0 {
+                    expressionStatus.getOperator()
+                }
+                else {
+                    expressionStatus.exprLeftOperand.append(value)
+                }
+                
+            case .inExpressionOperator:
+                if value == " " {
+                    if !expressionStatus.exprOperator.isEmpty {
+                        expressionStatus.validOperator = try getValidExpressionOperator(expressionStatus.exprOperator)
+                        expressionStatus.getRightOperand()
+                    }
+                    else {
+                        //nop
+                    }
+                }
+                else {
+                    expressionStatus.exprOperator.append(value)
+                }
+                
+            case .inExpressionRightOperand:
+                if value == ExpressionBracket.open.rawValue {
+                    expressionStatus.inOperandBracketCounter += 1
+                }
+                if value == ExpressionBracket.close.rawValue {
+                    expressionStatus.inOperandBracketCounter -= 1
+                }
+                
+                if (value == " " && expressionStatus.inOperandBracketCounter == 0) || lastIndex {
+                    if value != " " && lastIndex {
+                        expressionStatus.exprRightOperand.append(value)
+                    }
+                    
+                    if !expressionStatus.exprRightOperand.isEmpty {
+                        expressionStatus.finishExpression()
+                    }
+                    else {
+                        //nop
+                    }
+                }
+                else {
+                    expressionStatus.exprRightOperand.append(value)
+                }
+                
+            case .finishedExpression:
+                if value != " " {
+                    throw SwELError.invalidSyntax
+                }
+            }
         }
+        
+        if expressionStatus.status == .finishedExpression {
+            //it's an assignement
+            //“var1 = ‘test’” ->  Bool(true) —— inout parameters[var1] = “test”
+            
+            return true
+        }
+        
+        if expressionStatus.status == .inExpressionLeftOperand || (expressionStatus.status == .inExpressionOperator && expressionStatus.exprOperator.isEmpty ) {
+            //“int(1 +2)” -> Int(3)
+            //“‘test’” -> String(“test”)
 
-        return false
+            return "OK"
+        }
+        
+        throw SwELError.invalidSyntax
     }
     
     
@@ -426,7 +562,7 @@ public struct SwEL {
     
     
     // Private Funcs
-    private func getValidOperator(_ op: String) throws -> ConditionOperator {
+    private func getValidConditionOperator(_ op: String) throws -> ConditionOperator {
         var valid = false
         
         for validOp in iterateEnum(ConditionOperator.self) {
@@ -438,6 +574,24 @@ public struct SwEL {
         
         if valid {
             return ConditionOperator(rawValue: op)!
+        }
+        else {
+            throw SwELError.invalidOperator
+        }
+    }
+    
+    private func getValidExpressionOperator(_ op: String) throws -> ExpressionOperator {
+        var valid = false
+        
+        for validOp in iterateEnum(ExpressionOperator.self) {
+            if op == validOp.rawValue {
+                valid = true
+                break
+            }
+        }
+        
+        if valid {
+            return ExpressionOperator(rawValue: op)!
         }
         else {
             throw SwELError.invalidOperator
