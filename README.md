@@ -10,7 +10,7 @@ SwEL (Swift Expression Language) is a Swift 3.x package for macOS, iOS and Linux
 
 Expression could be String RegEx based operations like for example "substring('this is a test', 'test|tost')" or mathematical expressions.
 
-Mathematic Expressions could be based on simple arithmetic operations, like for example "int(3 + 4)", or on more complex mathematic operations using functions such as for example "float(2 * 3.14 + min(7, 13)".
+Mathematic Expressions could be based on simple arithmetic operations, like for example "int(3 + 4)", or on more complex mathematic operations using functions such as for example "float(2 * 3.14 + min(7, 13))".
 
 Conditions could verify complex expression logic using AND/OR operator and infinite level of brackets like for example in the String "(1 == 2 || 2 < 4) && 'test' != 'ko'".
 
